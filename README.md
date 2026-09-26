@@ -34,7 +34,7 @@ A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** a
 
 Download the latest build from the [Releases](../../releases) page, unzip it, and move `Claude Meters.app` to `/Applications`.
 
-> **Note on Gatekeeper:** until this project has a signed, notarized release, macOS will show an "unidentified developer" warning on first launch. Right-click (or Control-click) the app and choose **Open** to bypass it once. See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for the distribution plan.
+Releases from v0.1.1 onward are signed with a Developer ID certificate and notarized by Apple, so macOS opens them without a Gatekeeper warning.
 
 ## How it gets your usage data
 

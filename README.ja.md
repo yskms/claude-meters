@@ -34,7 +34,7 @@ Claude Codeの **セッション（5時間）** と **週間** の使用率を�
 
 [Releases](../../releases) ページから最新のビルドをダウンロードし、解凍して `Claude Meters.app` を `/Applications` に移動してください。
 
-> **Gatekeeperについて：** 署名・公証済みのリリースが用意できるまでは、初回起動時に「開発元が未確認のため開けません」という警告が表示されます。アプリを右クリック（またはControlキーを押しながらクリック）して「開く」を選ぶと、一度だけこの警告を回避できます。配布方針の詳細は[docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)を参照してください。
+v0.1.1以降のリリースはDeveloper ID証明書で署名し、Appleの公証（notarization）も済んでいるため、Gatekeeperの警告なく開けます。
 
 ## Usage情報の取得方法
 

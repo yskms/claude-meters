@@ -539,6 +539,9 @@ macOS専用。
 
 v1はDeveloper ID署名およびApple公証（Notarization）による直接配布を基本方針とする。
 
+v0.1.1でDeveloper ID Application証明書による署名・Apple公証・ステープルまで実施済み。
+`spctl -a -vvv --type execute`でGatekeeperの受理（`source=Notarized Developer ID`）を確認した。
+
 - Mac App Store対応：v1対象外
 - App Sandbox：v1では無効
   - Claude CodeのKeychain資格情報を利用する現在の取得方式との互換性を優先する
