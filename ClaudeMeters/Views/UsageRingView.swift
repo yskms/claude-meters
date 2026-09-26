@@ -16,8 +16,7 @@ struct UsageRingView: View {
                     .rotationEffect(.degrees(-90))
             }
 
-            Text(percent.map(String.init) ?? "–")
-                .font(.system(size: fontSize, weight: .medium, design: .monospaced))
+            valueText
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
         }
@@ -26,8 +25,21 @@ struct UsageRingView: View {
         .accessibilityLabel(accessibilityText)
     }
 
+    @ViewBuilder
+    private var valueText: some View {
+        if let percent {
+            Text(String(percent))
+                .font(.system(size: fontSize, weight: .medium, design: .monospaced))
+            + Text("\u{200A}%")
+                .font(.system(size: fontSize * 0.55, weight: .medium, design: .monospaced))
+        } else {
+            Text("–")
+                .font(.system(size: fontSize, weight: .medium, design: .monospaced))
+        }
+    }
+
     private var fontSize: CGFloat {
-        let base = diameter * 0.45
+        let base = diameter * 0.4
         guard let percent, percent >= 100 else { return base }
         return base * 0.8
     }
