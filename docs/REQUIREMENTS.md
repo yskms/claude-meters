@@ -513,19 +513,16 @@ English:
 
     更新間隔
 
-候補（UsageProviderの検証後に確定）：
+選択肢：
 
-    30 seconds
     1 minute
     5 minutes
 
-デフォルト候補：
+デフォルト：
 
     1 minute
 
-この設定を提供するかどうか、および選択肢の範囲は、
-UsageProviderの制約（取得可能な最小間隔・レート制限等）に応じて確定する。
-ユーザーが選択しても実際には機能しない間隔は選択肢に含めない。
+未ドキュメント化APIのレート制限を考慮し、30秒間隔はv1では提供しない。
 
 ---
 
@@ -543,9 +540,9 @@ macOS専用。
 v1はDeveloper ID署名およびApple公証（Notarization）による直接配布を基本方針とする。
 
 - Mac App Store対応：v1対象外
-- App Sandboxの採否：冒頭「開発前提・技術検証」の結果を踏まえて確定する
-- Sandboxにより追加のユーザー操作（ファイルアクセス許可等）が必要になる場合は、
-  18章のUX原則（操作不要）との比較検討を行う
+- App Sandbox：v1では無効
+  - Claude CodeのKeychain資格情報を利用する現在の取得方式との互換性を優先する
+  - Sandbox対応は、将来Claude Codeが公式なUsage取得方式を提供した場合に再検討する
 
 ## 技術候補
 
