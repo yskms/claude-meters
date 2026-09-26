@@ -1,0 +1,108 @@
+import SwiftUI
+import AppKit
+
+// MenuBarExtra's `label` does not reliably host a live nested SwiftUI view
+// tree containing custom Shapes (Circle strokes were dropped, and only the
+// first item of an HStack of two rings rendered). Rendering to a flat
+// NSImage via ImageRenderer and using that as the label sidesteps both
+// issues and is the standard workaround for MenuBarExtra + custom content.
+struct MenuBarMetersView: View {
+    @ObservedObject var viewModel: UsageViewModel
+
+    var body: some View {
+        Image(nsImage: renderedImage)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(accessibilityLabel)
+    }
+
+    // The rendered NSImage carries no accessibility info of its own — the
+    // labels set on UsageRingView never reach VoiceOver once flattened to a
+    // bitmap, so the combined label has to be built and attached here.
+    private var accessibilityLabel: String {
+        let sessionText: String
+        if let percent = viewModel.snapshot?.session.percentUsed {
+            sessionText = String(format: NSLocalizedString("accessibility.session_percent_used", comment: ""), percent)
+        } else {
+            sessionText = NSLocalizedString("accessibility.session_unavailable", comment: "")
+        }
+
+        let weeklyText: String
+        if let percent = viewModel.snapshot?.weekly.percentUsed {
+            weeklyText = String(format: NSLocalizedString("accessibility.weekly_percent_used", comment: ""), percent)
+        } else {
+            weeklyText = NSLocalizedString("accessibility.weekly_unavailable", comment: "")
+        }
+
+        var parts = [sessionText, weeklyText]
+        if viewModel.lastFetchFailed {
+            parts.append(NSLocalizedString("accessibility.update_failed", comment: ""))
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private var renderedImage: NSImage {
+        let content = MetersGlyph(
+            sessionPercent: viewModel.snapshot?.session.percentUsed,
+            weeklyPercent: viewModel.snapshot?.weekly.percentUsed
+        )
+        let renderer = ImageRenderer(content: content)
+        renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
+        renderer.proposedSize = ProposedViewSize(width: 44, height: 20)
+        let image = renderer.nsImage ?? NSImage(size: NSSize(width: 44, height: 20))
+        // Template = macOS tints it to match the menu bar (white on dark,
+        // black on light) exactly like every built-in status item, and
+        // re-tints automatically on appearance changes. Only alpha matters
+        // once this is set, which is why MeterRingGlyph paints in black with
+        // opacity standing in for the accent color the Popover still uses.
+        image.isTemplate = true
+        return image
+    }
+}
+
+private struct MetersGlyph: View {
+    let sessionPercent: Int?
+    let weeklyPercent: Int?
+
+    var body: some View {
+        HStack(spacing: 4) {
+            MenuBarRingGlyph(percent: sessionPercent)
+            MenuBarRingGlyph(percent: weeklyPercent)
+        }
+        .frame(width: 44, height: 20)
+    }
+}
+
+/// Monochrome, alpha-only counterpart of UsageRingView for the menu bar
+/// template image. Progress is conveyed by opacity, not by accent color,
+/// since a template image discards hue and keeps only alpha.
+private struct MenuBarRingGlyph: View {
+    let percent: Int?
+    private let diameter: CGFloat = 20
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.black.opacity(0.35), lineWidth: 2)
+
+            if let percent {
+                Circle()
+                    .trim(from: 0, to: CGFloat(min(max(percent, 0), 100)) / 100)
+                    .stroke(Color.black, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+
+            Text(percent.map(String.init) ?? "–")
+                .font(.system(size: fontSize, weight: .medium, design: .monospaced))
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .foregroundColor(.black)
+        }
+        .frame(width: diameter, height: diameter)
+    }
+
+    private var fontSize: CGFloat {
+        let base = diameter * 0.45
+        guard let percent, percent >= 100 else { return base }
+        return base * 0.8
+    }
+}
