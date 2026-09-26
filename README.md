@@ -2,6 +2,8 @@
   <img src="docs/images/app-icon.png" alt="Claude Meters app icon" width="96">
 </p>
 
+<p align="center"><b>English</b> | <a href="README.ja.md">日本語</a></p>
+
 # Claude Meters
 
 A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** and **Weekly** usage as two glanceable ring meters — nothing else.
