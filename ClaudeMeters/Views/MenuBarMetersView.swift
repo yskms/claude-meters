@@ -15,19 +15,26 @@ struct MenuBarMetersView: View {
             .accessibilityLabel(accessibilityLabel)
     }
 
+    // Suppresses stale percentages on fetch failure instead of leaving the
+    // previous successful snapshot's numbers on screen — matches PopoverView,
+    // which hides the same numbers via `displaySnapshot`.
+    private var displaySnapshot: UsageSnapshot? {
+        viewModel.lastFetchFailed ? nil : viewModel.snapshot
+    }
+
     // The rendered NSImage carries no accessibility info of its own — the
     // labels set on UsageRingView never reach VoiceOver once flattened to a
     // bitmap, so the combined label has to be built and attached here.
     private var accessibilityLabel: String {
         let sessionText: String
-        if let percent = viewModel.snapshot?.session.percentUsed {
+        if let percent = displaySnapshot?.session.percentUsed {
             sessionText = String(format: NSLocalizedString("accessibility.session_percent_used", comment: ""), percent)
         } else {
             sessionText = NSLocalizedString("accessibility.session_unavailable", comment: "")
         }
 
         let weeklyText: String
-        if let percent = viewModel.snapshot?.weekly.percentUsed {
+        if let percent = displaySnapshot?.weekly.percentUsed {
             weeklyText = String(format: NSLocalizedString("accessibility.weekly_percent_used", comment: ""), percent)
         } else {
             weeklyText = NSLocalizedString("accessibility.weekly_unavailable", comment: "")
@@ -42,8 +49,8 @@ struct MenuBarMetersView: View {
 
     private var renderedImage: NSImage {
         let content = MetersGlyph(
-            sessionPercent: viewModel.snapshot?.session.percentUsed,
-            weeklyPercent: viewModel.snapshot?.weekly.percentUsed
+            sessionPercent: displaySnapshot?.session.percentUsed,
+            weeklyPercent: displaySnapshot?.weekly.percentUsed
         )
         let renderer = ImageRenderer(content: content)
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2

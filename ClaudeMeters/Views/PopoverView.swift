@@ -12,11 +12,11 @@ struct PopoverView: View {
             HStack(spacing: 32) {
                 meterColumn(
                     title: NSLocalizedString("meter.session", comment: ""),
-                    usage: viewModel.snapshot?.session
+                    usage: displaySnapshot?.session
                 )
                 meterColumn(
                     title: NSLocalizedString("meter.weekly", comment: ""),
-                    usage: viewModel.snapshot?.weekly
+                    usage: displaySnapshot?.weekly
                 )
             }
 
@@ -40,6 +40,14 @@ struct PopoverView: View {
         }
         .padding()
         .frame(width: 260)
+    }
+
+    /// Suppresses the ring/percent display on fetch failure instead of
+    /// leaving the previous successful snapshot's numbers on screen — the
+    /// status line already switches to an error message, and showing a
+    /// stale percentage alongside it reads as if that number is current.
+    private var displaySnapshot: UsageSnapshot? {
+        viewModel.lastFetchFailed ? nil : viewModel.snapshot
     }
 
     @ViewBuilder

@@ -44,6 +44,47 @@ final class UsageViewModelTests: XCTestCase {
         }
     }
 
+    /// Guards the contract PopoverView/MenuBarMetersView rely on to decide
+    /// whether to hide stale numbers: on failure, the ViewModel keeps the
+    /// last successful snapshot around (it does not clear it to nil) while
+    /// setting lastError — hiding is the view layer's job, not the model's.
+    /// A later successful fetch must still fully replace the old snapshot.
+    func testFetchFailureAfterSuccessKeepsSnapshotThenRecovers() async {
+        let secondSnapshot = UsageSnapshot(
+            session: MeterUsage(percentUsed: 40, resetsAt: Date(timeIntervalSinceNow: 3600)),
+            weekly: MeterUsage(percentUsed: 12, resetsAt: Date(timeIntervalSinceNow: 86400)),
+            fetchedAt: Date()
+        )
+        let mock = MockUsageProvider(outcomes: [
+            .success(SampleData.snapshot),
+            .failure(.credentialUnavailable),
+            .success(secondSnapshot)
+        ])
+        let viewModel = UsageViewModel(provider: mock)
+
+        // 成功
+        await waitUntil { viewModel.snapshot != nil }
+        XCTAssertEqual(viewModel.snapshot?.session.percentUsed, 16)
+        XCTAssertFalse(viewModel.lastFetchFailed)
+
+        // 失敗: refreshNow() でループを再起動し、待機時間なしで次のフェッチを発生させる
+        viewModel.refreshNow()
+        await waitUntil { viewModel.lastFetchFailed }
+        XCTAssertEqual(viewModel.snapshot?.session.percentUsed, 16, "失敗時も直前のスナップショットは保持される")
+        if case .credentialUnavailable = viewModel.lastError {
+            // expected
+        } else {
+            XCTFail("expected .credentialUnavailable, got \(String(describing: viewModel.lastError))")
+        }
+
+        // 再成功
+        viewModel.refreshNow()
+        await waitUntil { viewModel.snapshot?.session.percentUsed == 40 }
+        XCTAssertFalse(viewModel.lastFetchFailed)
+        XCTAssertNil(viewModel.lastError)
+        XCTAssertEqual(viewModel.snapshot?.weekly.percentUsed, 12)
+    }
+
     func testRefreshIntervalPersistsToUserDefaults() {
         let mock = MockUsageProvider(outcomes: [.success(SampleData.snapshot)])
         let viewModel = UsageViewModel(provider: mock)
