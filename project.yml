@@ -27,7 +27,7 @@ targets:
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: "1"
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
   ClaudeMetersTests:
     type: bundle.unit-test
     platform: macOS
