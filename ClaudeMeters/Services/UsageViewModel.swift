@@ -4,7 +4,8 @@ import AppKit
 @MainActor
 final class UsageViewModel: ObservableObject {
     @Published private(set) var snapshot: UsageSnapshot?
-    @Published private(set) var lastFetchFailed = false
+    @Published private(set) var lastError: UsageProviderError?
+    var lastFetchFailed: Bool { lastError != nil }
     @Published var refreshInterval: TimeInterval {
         didSet {
             guard refreshInterval != oldValue else { return }
@@ -23,11 +24,11 @@ final class UsageViewModel: ObservableObject {
     /// seconds on the OS permission dialog), so a stale task can still be
     /// mid-fetch when a newer one starts. Gating every state write on
     /// "is my generation still current" is what keeps a stale result from
-    /// overwriting consecutiveFailures/lastFetchFailed/snapshot.
+    /// overwriting consecutiveFailures/lastError/snapshot.
     private var currentGeneration = 0
 
     private static let refreshIntervalDefaultsKey = "refreshInterval"
-    private static let maxBackoffInterval: TimeInterval = 300
+    static let maxBackoffInterval: TimeInterval = 300
 
     init(provider: UsageProvider = ClaudeUsageProvider()) {
         self.provider = provider
@@ -83,21 +84,34 @@ final class UsageViewModel: ObservableObject {
             let result = try await provider.fetchUsage()
             guard generation == currentGeneration else { return }
             snapshot = result
-            lastFetchFailed = false
+            lastError = nil
             consecutiveFailures = 0
         } catch is CancellationError {
             // Superseded by a newer generation — not a fetch failure.
         } catch {
             guard generation == currentGeneration else { return }
-            lastFetchFailed = true
+            lastError = (error as? UsageProviderError) ?? .network(error)
             consecutiveFailures += 1
         }
     }
 
     private func nextDelay() -> TimeInterval {
+        Self.computeDelay(
+            refreshInterval: refreshInterval,
+            consecutiveFailures: consecutiveFailures,
+            maxBackoffInterval: Self.maxBackoffInterval
+        )
+    }
+
+    /// Pure so it's directly unit-testable without touching Task.sleep timing.
+    nonisolated static func computeDelay(
+        refreshInterval: TimeInterval,
+        consecutiveFailures: Int,
+        maxBackoffInterval: TimeInterval
+    ) -> TimeInterval {
         guard consecutiveFailures > 0 else { return refreshInterval }
         let backoff = refreshInterval * pow(2, Double(consecutiveFailures))
-        return min(backoff, Self.maxBackoffInterval)
+        return min(backoff, maxBackoffInterval)
     }
 
     private func observeWake() {

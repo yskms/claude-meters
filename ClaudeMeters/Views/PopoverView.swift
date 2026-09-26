@@ -44,10 +44,11 @@ struct PopoverView: View {
 
     @ViewBuilder
     private var statusLine: some View {
-        if viewModel.lastFetchFailed {
-            Text(NSLocalizedString("error.fetch_failed", comment: ""))
+        if let error = viewModel.lastError {
+            Text(errorMessage(for: error))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         } else if let fetchedAt = viewModel.snapshot?.fetchedAt {
             Text(
                 String(
@@ -79,5 +80,14 @@ struct PopoverView: View {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    private func errorMessage(for error: UsageProviderError) -> String {
+        switch error {
+        case .credentialUnavailable:
+            return NSLocalizedString("error.credential_unavailable", comment: "")
+        case .invalidResponse, .network:
+            return NSLocalizedString("error.fetch_failed", comment: "")
+        }
     }
 }

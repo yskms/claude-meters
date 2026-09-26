@@ -113,6 +113,22 @@
         }
       }
     },
+    "error.credential_unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Meters needs access to Claude Code's saved sign-in. Approve the system prompt to continue."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude MetersがClaude Codeのログイン情報にアクセスする必要があります。表示されたシステムの許可ダイアログで許可してください。"
+          }
+        }
+      }
+    },
     "error.fetch_failed" : {
       "localizations" : {
         "en" : {

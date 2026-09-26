@@ -19,7 +19,17 @@ final class ClaudeUsageProvider: UsageProvider {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            throw CancellationError()
+        } catch {
+            throw UsageProviderError.network(error)
+        }
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw UsageProviderError.invalidResponse
         }
@@ -62,7 +72,7 @@ final class ClaudeUsageProvider: UsageProvider {
         throw UsageProviderError.credentialUnavailable
     }
 
-    private static func parseMeter(_ dict: [String: Any]?) -> MeterUsage? {
+    static func parseMeter(_ dict: [String: Any]?) -> MeterUsage? {
         guard let dict,
               let utilization = dict["utilization"] as? Double,
               let resetsAtString = dict["resets_at"] as? String,
@@ -74,7 +84,7 @@ final class ClaudeUsageProvider: UsageProvider {
         return MeterUsage(percentUsed: percent, resetsAt: resetsAt)
     }
 
-    private static func parseDate(_ string: String) -> Date? {
+    static func parseDate(_ string: String) -> Date? {
         let withFraction = ISO8601DateFormatter()
         withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         if let date = withFraction.date(from: string) { return date }

@@ -28,3 +28,27 @@ targets:
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: ""
+  ClaudeMetersTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: ClaudeMetersTests
+    dependencies:
+      - target: ClaudeMeters
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yskms.ClaudeMetersTests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Claude Meters.app/Contents/MacOS/Claude Meters"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  ClaudeMeters:
+    build:
+      targets:
+        ClaudeMeters: all
+        ClaudeMetersTests: [test]
+    test:
+      targets:
+        - ClaudeMetersTests
