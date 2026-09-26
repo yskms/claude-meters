@@ -38,7 +38,9 @@ Releases from v0.1.1 onward are signed with a Developer ID certificate and notar
 
 ## How it gets your usage data
 
-Claude Meters never asks for or stores its own credentials. Instead it reads the OAuth token that Claude Code already stores in the macOS Keychain (`Claude Code-credentials`) and calls Anthropic's usage endpoint with it — the same one Claude Code itself uses. macOS will show a one-time Keychain access prompt the first time; approving it (with your login password) lets the app read that token.
+Claude Meters never asks for or stores its own credentials. Instead it reads the OAuth token that Claude Code already stores in the macOS Keychain (`Claude Code-credentials`) and calls Anthropic's usage endpoint with it — the same one Claude Code itself uses. macOS will show a Keychain access prompt when it does; approving it (with your login password) lets the app read that token.
+
+This prompt can reappear from time to time rather than staying approved forever — likely because Claude Code itself refreshes that Keychain entry periodically, which resets the "always allow" you granted. This isn't something Claude Meters can control; just approve it again when it shows up.
 
 This endpoint is **not part of Anthropic's public/documented API** and could change without notice — see [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for the full investigation, the reasoning behind this approach, and its known risks (rate limits, format changes, Keychain access behavior).
 
