@@ -15,3 +15,6 @@ DerivedData/
 .swiftpm/
 Packages/
 Package.resolved
+
+# Release packaging output
+dist/
