@@ -32,7 +32,9 @@ Claude Codeの **セッション（5時間）** と **週間** の使用率を�
 
 ## インストール
 
-[Releases](../../releases) ページから最新のビルドをダウンロードし、解凍して `Claude Meters.app` を `/Applications` に移動してください。
+[Releases](../../releases) ページの **Assets** から `ClaudeMeters-v*-macOS.dmg`（例: `ClaudeMeters-v0.1.2-macOS.dmg`）をダウンロードしてください。「Source code (zip)」「Source code (tar.gz)」はソースコードなので不要です。
+
+ダウンロードした`.dmg`ファイルを開き、表示されたウィンドウで `Claude Meters.app` を `Applications` フォルダにドラッグしてください。
 
 v0.1.1以降のリリースはDeveloper ID証明書で署名し、Appleの公証（notarization）も済んでいるため、Gatekeeperの警告なく開けます。
 

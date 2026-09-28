@@ -55,12 +55,15 @@ Claude CodeのKeychain項目への他アプリからのアクセスと非互換�
 
 `xcodebuild build`ではなく、必ず`archive` → `-exportArchive`を使う。`build`のままだと`get-task-allow`権限が付与され、secure timestampも付かず、Apple公証（notarization）が失敗する（実際に一度失敗した）。
 
+配布物はZIPではなくDMGにしている。ZIPだとFinderでダブルクリックした際にダウンロードフォルダ内でそのまま起動できてしまい、Applicationsフォルダへの移動を促す一般的なUIが出ないため。DMG化には`create-dmg`（Homebrew、`brew install create-dmg`で導入済み）を使い、`Distribution/build-dmg.sh`でウィンドウレイアウト・Applicationsへのシンボリックリンク配置・公証・stapleまでを一括で行う。
+
 ```sh
 xcodebuild archive -project ClaudeMeters.xcodeproj -scheme ClaudeMeters -configuration Release -archivePath dist/ClaudeMeters.xcarchive
 xcodebuild -exportArchive -archivePath dist/ClaudeMeters.xcarchive -exportPath dist/export -exportOptionsPlist Distribution/ExportOptions.plist
-xcrun notarytool submit dist/ClaudeMeters-*.zip --keychain-profile "claude-meters-notary" --wait
-xcrun stapler staple "dist/export/Claude Meters.app"
+Distribution/build-dmg.sh <version>   # 例: Distribution/build-dmg.sh 0.1.2
 ```
+
+`build-dmg.sh`は内部で`create-dmg --notarize claude-meters-notary`を使っており、DMG作成・Apple公証（notarization）・stapleまでを1コマンドで行う（`notarytool submit`・`stapler staple`を個別に叩く必要はない）。
 
 - 署名: Developer ID Application: Masashi Yasaka (3L2FPFG722)
 - notarytoolの認証情報はKeychainに`claude-meters-notary`というプロファイル名で保存済み（Apple IDパスワードの再入力は不要）

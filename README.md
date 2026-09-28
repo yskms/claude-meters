@@ -32,7 +32,9 @@ A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** a
 
 ## Installation
 
-Download the latest build from the [Releases](../../releases) page, unzip it, and move `Claude Meters.app` to `/Applications`.
+Download `ClaudeMeters-v*-macOS.dmg` (e.g. `ClaudeMeters-v0.1.2-macOS.dmg`) from the **Assets** section of the [Releases](../../releases) page. You don't need "Source code (zip)" or "Source code (tar.gz)" — those are just the source code.
+
+Open the downloaded `.dmg` file, then drag `Claude Meters.app` into the `Applications` folder in the window that appears.
 
 Releases from v0.1.1 onward are signed with a Developer ID certificate and notarized by Apple, so macOS opens them without a Gatekeeper warning.
 
