@@ -36,6 +36,7 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 `SettingsWindowController`（`App/SettingsWindowController.swift`）がSwiftUIの`Settings`シーンを使わず、`NSWindow(contentViewController:)`+`NSHostingController`で設定ウィンドウを直接生成・表示している。かつては`NSApp.sendAction(Selector(("showSettingsWindow:")), ...)`という非公開セレクタで`Settings`シーンを開こうとしていたが、このアプリは`LSUIElement`（Dockアイコンなし）のため実機では機能せず、設定ボタンを押しても何も起きなかった（Consoleに`Please use SettingsLink for opening the Settings scene.`という警告が出るのみでウィンドウは開かない）。`SettingsLink`はmacOS 14以降限定でmacOS 13をサポートできないため採用せず、自前のNSWindow管理に置き換えた。`ClaudeMetersApp.swift`に`Settings { }`シーンは存在しない。
 
 - `NSWindow(contentRect: .zero, ...)`で作ってから`contentView`を設定し`center()`を呼ぶ、という順序にはしないこと。ウィンドウは原点（左下）を固定したままコンテンツに合わせて広がるため、サイズ確定前に`center()`すると、ウィンドウ中心ではなく左下角が画面中央に来た状態のまま広がり、見た目上センタリングされないおそれがある（推測であり、この崩れを実機のスクリーンショットで再現・確認したわけではない）。`NSWindow(contentViewController:)`はコンテンツのfitting sizeでウィンドウを先に確定させてから`center()`できるため、そちらを使う。
+- ウィンドウは`isReleasedWhenClosed = false`で使い回すため、生成時のfitting sizeのまま固定される。言語によってラベル幅が変わる（多言語対応後）ので、`show()`のたびと言語切替のたびに`resizeToFitContent()`でウィンドウ幅をコンテンツに合わせ直している。言語切替の購読では`DispatchQueue.main.async`で1 runloop待ってから測っている。`LocalizationManager.language`は`@Published`で`willSet`のタイミングで通知されるため、待たずに測るとSwiftUIがまだ新しい言語で再描画する前の（古い）サイズを拾ってしまう。
 
 ## 文言は必ず`LocalizationManager`経由で取得する
 

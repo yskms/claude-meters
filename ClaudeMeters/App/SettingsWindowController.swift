@@ -15,6 +15,7 @@ final class SettingsWindowController {
     static let shared = SettingsWindowController()
 
     private var windowController: NSWindowController?
+    private var hostingController: NSHostingController<SettingsView>?
     private var languageObserver: AnyCancellable?
 
     private init() {}
@@ -42,6 +43,7 @@ final class SettingsWindowController {
             // rect, so the window ends up with its top-left corner (not
             // its center) at the screen's center once it grows to fit.
             let hostingController = NSHostingController(rootView: SettingsView(viewModel: viewModel))
+            self.hostingController = hostingController
             let window = NSWindow(contentViewController: hostingController)
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
@@ -50,24 +52,61 @@ final class SettingsWindowController {
 
             // Keeps the title bar in sync if the language is changed while
             // this window is open, instead of only updating on the next
-            // show() call.
+            // show() call. The resize has to wait a runloop turn: `language`
+            // is `@Published`, which notifies from `willSet` — SwiftUI
+            // hasn't re-rendered SettingsView with the new language yet at
+            // the point this sink runs, so measuring fittingSize
+            // synchronously here would still see the old (pre-switch) size.
             languageObserver = LocalizationManager.shared.$language
-                .sink { [weak window] newLanguage in
-                    window?.title = LocalizationManager.shared.string("menu.settings", for: newLanguage)
+                .sink { [weak self] newLanguage in
+                    self?.windowController?.window?.title = LocalizationManager.shared.string("menu.settings", for: newLanguage)
+                    DispatchQueue.main.async {
+                        self?.resizeToFitContent()
+                    }
                 }
+        } else {
+            // The window is reused across show() calls (see
+            // isReleasedWhenClosed above), so its size otherwise stays
+            // frozen at whatever it was when first created — including
+            // across a close/reopen in a different language, which doesn't
+            // go through the languageObserver above.
+            resizeToFitContent()
         }
 
         if let popoverFrame, let window = windowController?.window {
             var origin = window.frame.origin
             origin.x = popoverFrame.minX
-            if let visibleFrame = (window.screen ?? NSScreen.main)?.visibleFrame {
-                origin.x = min(max(origin.x, visibleFrame.minX), visibleFrame.maxX - window.frame.width)
-            }
             window.setFrameOrigin(origin)
+            clampToVisibleFrame(window)
         }
 
         NSApp.activate(ignoringOtherApps: true)
         windowController?.showWindow(nil)
         windowController?.window?.makeKeyAndOrderFront(nil)
+    }
+
+    // setContentSize keeps frame.origin — the window's bottom-left corner —
+    // fixed and grows toward the top-right (unintuitively: it's the title
+    // bar that would move if height ever changed, not the bottom edge).
+    // Only width changes today, so that doesn't bite yet, but it's why any
+    // future height change here can't assume the title bar stays put.
+    //
+    // Called before the popover-alignment step in show() touches origin.x,
+    // and re-clamps to the screen itself: the menu bar (and this window) sit
+    // near the screen's right edge, so growing the window for a longer
+    // language can push it past visibleFrame.maxX. Both callers — show()'s
+    // reuse branch and the language-switch observer above it — go through
+    // here so neither can skip the clamp.
+    private func resizeToFitContent() {
+        guard let window = windowController?.window, let hostingController else { return }
+        window.setContentSize(hostingController.view.fittingSize)
+        clampToVisibleFrame(window)
+    }
+
+    private func clampToVisibleFrame(_ window: NSWindow) {
+        guard let visibleFrame = (window.screen ?? NSScreen.main)?.visibleFrame else { return }
+        var origin = window.frame.origin
+        origin.x = min(max(origin.x, visibleFrame.minX), visibleFrame.maxX - window.frame.width)
+        window.setFrameOrigin(origin)
     }
 }
