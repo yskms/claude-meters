@@ -7,8 +7,12 @@ APP_NAME="Claude Meters"
 VERSION="${1:?使い方: Distribution/build-dmg.sh <version>}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-EXPORT_APP="$ROOT_DIR/dist/export/$APP_NAME.app"
+ARCHIVE_DIR="$ROOT_DIR/dist/ClaudeMeters.xcarchive"
+EXPORT_DIR="$ROOT_DIR/dist/export"
+EXPORT_APP="$EXPORT_DIR/$APP_NAME.app"
+ARCHIVE_APP="$ARCHIVE_DIR/Products/Applications/$APP_NAME.app"
 DMG_PATH="$ROOT_DIR/dist/ClaudeMeters-v$VERSION-macOS.dmg"
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 
 if [ ! -d "$EXPORT_APP" ]; then
   echo "エラー: \"$EXPORT_APP\" が見つかりません。先に archive / -exportArchive を実行してください。" >&2
@@ -33,3 +37,11 @@ create-dmg \
   "$EXPORT_APP"
 
 echo "DMG作成・公証・staple完了: $DMG_PATH"
+
+# archive/exportの.appはLaunch Servicesに自動登録され、/Applicationsの本体と
+# 別アプリとしてSpotlight/Launchpadに重複表示され続ける。DMGができた時点で
+# 用済みなので、登録解除してから削除する（再度必要なら archive からやり直せばよい）。
+"$LSREGISTER" -u "$EXPORT_APP" 2>/dev/null || true
+"$LSREGISTER" -u "$ARCHIVE_APP" 2>/dev/null || true
+rm -rf "$EXPORT_DIR" "$ARCHIVE_DIR"
+echo "中間生成物(export/archive)を削除しました"

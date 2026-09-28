@@ -63,7 +63,7 @@ xcodebuild -exportArchive -archivePath dist/ClaudeMeters.xcarchive -exportPath d
 Distribution/build-dmg.sh <version>   # 例: Distribution/build-dmg.sh 0.1.2
 ```
 
-`build-dmg.sh`は内部で`create-dmg --notarize claude-meters-notary`を使っており、DMG作成・Apple公証（notarization）・stapleまでを1コマンドで行う（`notarytool submit`・`stapler staple`を個別に叩く必要はない）。
+`build-dmg.sh`は内部で`create-dmg --notarize claude-meters-notary`を使っており、DMG作成・Apple公証（notarization）・stapleまでを1コマンドで行う（`notarytool submit`・`stapler staple`を個別に叩く必要はない）。完了後、`dist/export`・`dist/ClaudeMeters.xcarchive`内の`.app`をLaunch Servicesから登録解除してディレクトリごと削除するところまでスクリプトが行う。これらの`.app`は登録解除しないと`/Applications`の本体と別アプリとしてSpotlight/Launchpadに重複表示され続けるため（過去に複数回発生）。
 
 - 署名: Developer ID Application: Masashi Yasaka (3L2FPFG722)
 - notarytoolの認証情報はKeychainに`claude-meters-notary`というプロファイル名で保存済み（Apple IDパスワードの再入力は不要）
