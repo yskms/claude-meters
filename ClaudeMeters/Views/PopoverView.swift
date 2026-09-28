@@ -27,15 +27,13 @@ struct PopoverView: View {
 
             Divider()
 
-            Button(l10n.string("menu.settings")) {
+            menuButton(l10n.string("menu.settings")) {
                 SettingsWindowController.shared.show(viewModel: viewModel)
             }
-            .buttonStyle(.plain)
 
-            Button(l10n.string("menu.quit")) {
+            menuButton(l10n.string("menu.quit")) {
                 NSApplication.shared.terminate(nil)
             }
-            .buttonStyle(.plain)
         }
         .padding()
         .frame(width: 260)
@@ -70,6 +68,19 @@ struct PopoverView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+    }
+
+    /// Expands the button's hit area to the full row instead of just the
+    /// text glyphs, which `.buttonStyle(.plain)` alone leaves too narrow
+    /// to click comfortably.
+    private func menuButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

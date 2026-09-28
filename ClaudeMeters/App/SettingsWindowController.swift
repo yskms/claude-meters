@@ -20,6 +20,20 @@ final class SettingsWindowController {
     private init() {}
 
     func show(viewModel: UsageViewModel) {
+        // The "設定" button lives inside the MenuBarExtra popover, which is
+        // that popover's key window at the moment it's clicked. Capture its
+        // frame before closing it: closing mirrors clicking outside the
+        // popover to dismiss it (so the Settings window doesn't open
+        // stacked on top of it), and the frame lets us line the Settings
+        // window's left edge up with the popover's instead of leaving it
+        // dead-centered on screen, unrelated-looking to where it was
+        // opened from.
+        var popoverFrame: NSRect?
+        if let popoverWindow = NSApp.keyWindow, popoverWindow !== windowController?.window {
+            popoverFrame = popoverWindow.frame
+            popoverWindow.close()
+        }
+
         if windowController == nil {
             // NSWindow(contentViewController:) sizes the window to the
             // hosted SwiftUI content's fitting size before we call
@@ -42,6 +56,16 @@ final class SettingsWindowController {
                     window?.title = LocalizationManager.shared.string("menu.settings", for: newLanguage)
                 }
         }
+
+        if let popoverFrame, let window = windowController?.window {
+            var origin = window.frame.origin
+            origin.x = popoverFrame.minX
+            if let visibleFrame = (window.screen ?? NSScreen.main)?.visibleFrame {
+                origin.x = min(max(origin.x, visibleFrame.minX), visibleFrame.maxX - window.frame.width)
+            }
+            window.setFrameOrigin(origin)
+        }
+
         NSApp.activate(ignoringOtherApps: true)
         windowController?.showWindow(nil)
         windowController?.window?.makeKeyAndOrderFront(nil)
