@@ -67,3 +67,4 @@ Distribution/build-dmg.sh <version>   # 例: Distribution/build-dmg.sh 0.1.2
 
 - 署名: Developer ID Application: Masashi Yasaka (3L2FPFG722)
 - notarytoolの認証情報はKeychainに`claude-meters-notary`というプロファイル名で保存済み（Apple IDパスワードの再入力は不要）
+- 署名証明書・notary認証情報はどちらもMac本体のキーチェーンに紐づくローカル情報で、iCloud Keychain等では自動同期されない。新しいMacで配布ビルドする場合は、証明書の`.p12`インポートまたはdeveloper.apple.comでの再発行と、`xcrun notarytool store-credentials "claude-meters-notary" --apple-id <Apple ID> --team-id 3L2FPFG722 --password <アプリ用パスワード>`によるnotary認証情報の再登録が別途必要（2026-09-28、Mac移行時に未設定で発覚）
