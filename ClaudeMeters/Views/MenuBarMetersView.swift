@@ -86,17 +86,28 @@ private struct MetersGlyph: View {
 private struct MenuBarRingGlyph: View {
     let percent: Int?
     private let diameter: CGFloat = 20
+    private let lineWidth: CGFloat = 2
 
+    // Circle().stroke() centers its line on the circle's edge, so half the
+    // line width bleeds outside the shape's own bounding box. In a normal
+    // view hierarchy that bleed just falls into surrounding padding, but
+    // this glyph gets flattened by ImageRenderer into a fixed-size bitmap
+    // (see renderedImage), which hard-clips anything outside that box —
+    // without the inset, the outer edge of the ring gets cut off. Sizing
+    // the circles to (diameter - lineWidth) keeps the stroke's outer edge
+    // exactly at the glyph's frame boundary instead of past it.
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color.black.opacity(0.35), lineWidth: 2)
+                .stroke(Color.black.opacity(0.35), lineWidth: lineWidth)
+                .frame(width: diameter - lineWidth, height: diameter - lineWidth)
 
             if let percent {
                 Circle()
                     .trim(from: 0, to: CGFloat(min(max(percent, 0), 100)) / 100)
-                    .stroke(Color.black, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .stroke(Color.black, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    .frame(width: diameter - lineWidth, height: diameter - lineWidth)
             }
 
             Text(percent.map(String.init) ?? "–")
