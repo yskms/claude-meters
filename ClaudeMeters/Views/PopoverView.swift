@@ -3,6 +3,7 @@ import AppKit
 
 struct PopoverView: View {
     @ObservedObject var viewModel: UsageViewModel
+    @ObservedObject private var l10n = LocalizationManager.shared
 
     var body: some View {
         VStack(spacing: 12) {
@@ -11,11 +12,11 @@ struct PopoverView: View {
 
             HStack(spacing: 32) {
                 meterColumn(
-                    title: NSLocalizedString("meter.session", comment: ""),
+                    title: l10n.string("meter.session"),
                     usage: displaySnapshot?.session
                 )
                 meterColumn(
-                    title: NSLocalizedString("meter.weekly", comment: ""),
+                    title: l10n.string("meter.weekly"),
                     usage: displaySnapshot?.weekly
                 )
             }
@@ -26,18 +27,22 @@ struct PopoverView: View {
 
             Divider()
 
-            Button(NSLocalizedString("menu.settings", comment: "")) {
+            Button(l10n.string("menu.settings")) {
                 SettingsWindowController.shared.show(viewModel: viewModel)
             }
             .buttonStyle(.plain)
 
-            Button(NSLocalizedString("menu.quit", comment: "")) {
+            Button(l10n.string("menu.quit")) {
                 NSApplication.shared.terminate(nil)
             }
             .buttonStyle(.plain)
         }
         .padding()
         .frame(width: 260)
+        // Our own labels already come from l10n.string(), but this keeps
+        // any SwiftUI-native chrome (e.g. VoiceOver control descriptions)
+        // consistent with the chosen language instead of the OS default.
+        .environment(\.locale, l10n.locale ?? .current)
     }
 
     /// Suppresses the ring/percent display on fetch failure instead of
@@ -58,8 +63,8 @@ struct PopoverView: View {
         } else if let fetchedAt = viewModel.snapshot?.fetchedAt {
             Text(
                 String(
-                    format: NSLocalizedString("status.last_updated", comment: ""),
-                    fetchedAt.formatted(date: .omitted, time: .shortened)
+                    format: l10n.string("status.last_updated"),
+                    fetchedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: l10n.locale ?? .current))
                 )
             )
             .font(.caption)
@@ -85,15 +90,18 @@ struct PopoverView: View {
     private func resetLabel(for date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
+        if let locale = l10n.locale {
+            formatter.locale = locale
+        }
         return formatter.localizedString(for: date, relativeTo: Date())
     }
 
     private func errorMessage(for error: UsageProviderError) -> String {
         switch error {
         case .credentialUnavailable:
-            return NSLocalizedString("error.credential_unavailable", comment: "")
+            return l10n.string("error.credential_unavailable")
         case .invalidResponse, .network:
-            return NSLocalizedString("error.fetch_failed", comment: "")
+            return l10n.string("error.fetch_failed")
         }
     }
 }

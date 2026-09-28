@@ -8,6 +8,7 @@ import AppKit
 // issues and is the standard workaround for MenuBarExtra + custom content.
 struct MenuBarMetersView: View {
     @ObservedObject var viewModel: UsageViewModel
+    @ObservedObject private var l10n = LocalizationManager.shared
 
     var body: some View {
         Image(nsImage: renderedImage)
@@ -28,21 +29,21 @@ struct MenuBarMetersView: View {
     private var accessibilityLabel: String {
         let sessionText: String
         if let percent = displaySnapshot?.session.percentUsed {
-            sessionText = String(format: NSLocalizedString("accessibility.session_percent_used", comment: ""), percent)
+            sessionText = String(format: l10n.string("accessibility.session_percent_used"), percent)
         } else {
-            sessionText = NSLocalizedString("accessibility.session_unavailable", comment: "")
+            sessionText = l10n.string("accessibility.session_unavailable")
         }
 
         let weeklyText: String
         if let percent = displaySnapshot?.weekly.percentUsed {
-            weeklyText = String(format: NSLocalizedString("accessibility.weekly_percent_used", comment: ""), percent)
+            weeklyText = String(format: l10n.string("accessibility.weekly_percent_used"), percent)
         } else {
-            weeklyText = NSLocalizedString("accessibility.weekly_unavailable", comment: "")
+            weeklyText = l10n.string("accessibility.weekly_unavailable")
         }
 
         var parts = [sessionText, weeklyText]
         if viewModel.lastFetchFailed {
-            parts.append(NSLocalizedString("accessibility.update_failed", comment: ""))
+            parts.append(l10n.string("accessibility.update_failed"))
         }
         return parts.joined(separator: " ")
     }

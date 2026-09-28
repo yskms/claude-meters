@@ -23,6 +23,7 @@
 		A1F4F24535BF4457490BFC1C /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08711A9459C55D26F3AE04AA /* PopoverView.swift */; };
 		B008BAB7B46088F9C38F55E0 /* ClaudeUsageProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C9EFB58ECA23B6BE5C48C54 /* ClaudeUsageProviderTests.swift */; };
 		B0EFD8EA9CDF53A12A2056E6 /* UsageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A687E197C0F1609DAE44FE /* UsageViewModel.swift */; };
+		E687781E506E2FB2245F661C /* LocalizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B97B63613834F045E6CF187 /* LocalizationManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +45,7 @@
 		50A687E197C0F1609DAE44FE /* UsageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageViewModel.swift; sourceTree = "<group>"; };
 		56538FAE95D3C14B65525E94 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		56F579E5AB9D4008CE69E7F4 /* ClaudeMeters.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeMeters.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B97B63613834F045E6CF187 /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
 		64571509300EB174FFD401A5 /* ClaudeUsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageProvider.swift; sourceTree = "<group>"; };
 		886819DA11E5B53C6AF777C2 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		9112BDF3CFD55ADF37C0FE6B /* UsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageProvider.swift; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				43B745BC90916BD078CCBBA3 /* ClaudeMetersApp.swift */,
+				5B97B63613834F045E6CF187 /* LocalizationManager.swift */,
 				4C3CD2E1DB0A8C26B4A8F41B /* SettingsWindowController.swift */,
 			);
 			path = App;
@@ -243,6 +246,7 @@
 			files = (
 				7FE4A385E5EB6A1FF318D1A7 /* ClaudeMetersApp.swift in Sources */,
 				9C7CA8EB4534F3B2AEF92F9B /* ClaudeUsageProvider.swift in Sources */,
+				E687781E506E2FB2245F661C /* LocalizationManager.swift in Sources */,
 				3D1665FF38A702E339A46C0A /* MenuBarMetersView.swift in Sources */,
 				A1F4F24535BF4457490BFC1C /* PopoverView.swift in Sources */,
 				4A3BCB0D0824EB5BDB738EFA /* SettingsView.swift in Sources */,

@@ -3,6 +3,7 @@ import SwiftUI
 struct UsageRingView: View {
     let percent: Int?
     var diameter: CGFloat = 20
+    @ObservedObject private var l10n = LocalizationManager.shared
 
     var body: some View {
         ZStack {
@@ -46,8 +47,8 @@ struct UsageRingView: View {
 
     private var accessibilityText: String {
         guard let percent else {
-            return NSLocalizedString("accessibility.unavailable", comment: "")
+            return l10n.string("accessibility.unavailable")
         }
-        return String(format: NSLocalizedString("accessibility.percent_used", comment: ""), percent)
+        return String(format: l10n.string("accessibility.percent_used"), percent)
     }
 }

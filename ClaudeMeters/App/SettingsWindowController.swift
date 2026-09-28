@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// Manages the Settings window directly with AppKit instead of relying on
@@ -14,6 +15,7 @@ final class SettingsWindowController {
     static let shared = SettingsWindowController()
 
     private var windowController: NSWindowController?
+    private var languageObserver: AnyCancellable?
 
     private init() {}
 
@@ -28,10 +30,17 @@ final class SettingsWindowController {
             let hostingController = NSHostingController(rootView: SettingsView(viewModel: viewModel))
             let window = NSWindow(contentViewController: hostingController)
             window.styleMask = [.titled, .closable]
-            window.title = NSLocalizedString("menu.settings", comment: "")
             window.isReleasedWhenClosed = false
             window.center()
             windowController = NSWindowController(window: window)
+
+            // Keeps the title bar in sync if the language is changed while
+            // this window is open, instead of only updating on the next
+            // show() call.
+            languageObserver = LocalizationManager.shared.$language
+                .sink { [weak window] _ in
+                    window?.title = LocalizationManager.shared.string("menu.settings")
+                }
         }
         NSApp.activate(ignoringOtherApps: true)
         windowController?.showWindow(nil)

@@ -37,6 +37,15 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 
 - `NSWindow(contentRect: .zero, ...)`で作ってから`contentView`を設定し`center()`を呼ぶ、という順序にはしないこと。サイズ確定前に`center()`すると、ウィンドウ中心ではなく左下角が画面中央に来た状態でその後コンテンツに合わせて右上へ広がり、見た目上センタリングされない。`NSWindow(contentViewController:)`はコンテンツのfitting sizeでウィンドウを先に確定させるため、`center()`より前にこちらを使う。
 
+## 文言は必ず`LocalizationManager`経由で取得する
+
+アプリ内言語切替（設定画面の「言語」ピッカー）に対応する文言は、`NSLocalizedString`や`Text("key")`（`LocalizedStringKey`）、`String(localized:)`を直接使わず、`LocalizationManager.shared.string(_:)`（各Viewでは`@ObservedObject private var l10n = LocalizationManager.shared`ごしに`l10n.string(_:)`）を必ず経由すること。
+
+- `LocalizationManager`はユーザーが選んだ言語のBundleを自前で解決しており、`NSLocalizedString`等のSwiftUI/Foundation標準の仕組みはOSの言語設定しか見ない。直接呼ぶと、システム言語と異なる言語を選んでいるときにその箇所だけ翻訳されずOS言語のまま表示される
+- `Text("Claude Meters")`や`Text("–")`のような、そもそも翻訳不要な文字列リテラルは対象外
+- 文言を表示するViewは`LocalizationManager.shared`を`@ObservedObject`で監視すること（`PopoverView`・`SettingsView`・`MenuBarMetersView`・`UsageRingView`を参照）。監視していないと、`l10n.string()`を使っていても言語切替時にViewが再描画されない
+- 日付・相対時刻など`Locale`を扱うAPI（`RelativeDateTimeFormatter`、`Date.FormatStyle`等）は`LocalizationManager.shared.locale`（地域設定は維持したまま言語だけ差し替えたLocale、システム追従時は`nil`）を明示的に渡すこと。渡さないと`Locale.current`（システム言語）で書式化される
+
 ## App Sandboxはv1では無効（意図的）
 
 Claude CodeのKeychain項目への他アプリからのアクセスと非互換になる可能性が高いため。Mac App Store配布はv1対象外。
