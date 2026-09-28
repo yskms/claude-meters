@@ -22,7 +22,7 @@ struct SettingsView: View {
                 Text(l10n.string("interval.5m")).tag(300.0)
             }
 
-            // "English"/"日本語" are the languages' own native names, so
+            // "English"/"日本語"/etc. are the languages' own native names, so
             // they are shown as-is rather than run through localization —
             // the point is that they stay recognizable no matter which
             // language the UI is currently displaying in.
@@ -30,6 +30,12 @@ struct SettingsView: View {
                 Text(l10n.string("language.system")).tag(AppLanguage.system)
                 Text("English").tag(AppLanguage.en)
                 Text("日本語").tag(AppLanguage.ja)
+                Text("한국어").tag(AppLanguage.ko)
+                Text("Deutsch").tag(AppLanguage.de)
+                Text("Français").tag(AppLanguage.fr)
+                Text("Italiano").tag(AppLanguage.it)
+                Text("Português (Brasil)").tag(AppLanguage.ptBR)
+                Text("Español").tag(AppLanguage.es)
             }
         }
         .padding()

@@ -4,6 +4,12 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case system
     case en
     case ja
+    case ko
+    case de
+    case fr
+    case it
+    case ptBR = "pt-BR"
+    case es
 
     var id: String { rawValue }
 }
@@ -36,8 +42,16 @@ final class LocalizationManager: ObservableObject {
     /// overridden. This is only the region's *default* conventions — a
     /// manually-toggled system preference such as "24-Hour Time" isn't part
     /// of a region code and is not reproduced here.
+    ///
+    /// `rawValue` is plain (`ja`, `de`, ...) for most languages, but a case
+    /// like `.ptBR` already carries its own region (`pt-BR`) — appending the
+    /// system's region on top of that would produce an invalid identifier
+    /// like `pt-BR_JP`, so those are used as-is instead.
     var locale: Locale? {
         guard language != .system else { return nil }
+        guard !language.rawValue.contains("-") else {
+            return Locale(identifier: language.rawValue)
+        }
         guard let region = Locale.current.region?.identifier else {
             return Locale(identifier: language.rawValue)
         }
