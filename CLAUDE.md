@@ -31,6 +31,12 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 
 `MenuBarExtra`と`SMAppService`（ログイン時起動）がmacOS 13以降必須のため。`SettingsLink`と`onChange(of:initial:_:)`の2引数版はmacOS 14以降限定なので使用不可（`PopoverView`・`SettingsView`で旧APIに置き換え済み）。新しいAPIを使う際はデプロイメントターゲットに注意する。
 
+## 設定ウィンドウはAppKitで自前管理している
+
+`SettingsWindowController`（`App/SettingsWindowController.swift`）がSwiftUIの`Settings`シーンを使わず、`NSWindow(contentViewController:)`+`NSHostingController`で設定ウィンドウを直接生成・表示している。かつては`NSApp.sendAction(Selector(("showSettingsWindow:")), ...)`という非公開セレクタで`Settings`シーンを開こうとしていたが、このアプリは`LSUIElement`（Dockアイコンなし）のため実機では機能せず、設定ボタンを押しても何も起きなかった（Consoleに`Please use SettingsLink for opening the Settings scene.`という警告が出るのみでウィンドウは開かない）。`SettingsLink`はmacOS 14以降限定でmacOS 13をサポートできないため採用せず、自前のNSWindow管理に置き換えた。`ClaudeMetersApp.swift`に`Settings { }`シーンは存在しない。
+
+- `NSWindow(contentRect: .zero, ...)`で作ってから`contentView`を設定し`center()`を呼ぶ、という順序にはしないこと。サイズ確定前に`center()`すると、ウィンドウ中心ではなく左下角が画面中央に来た状態でその後コンテンツに合わせて右上へ広がり、見た目上センタリングされない。`NSWindow(contentViewController:)`はコンテンツのfitting sizeでウィンドウを先に確定させるため、`center()`より前にこちらを使う。
+
 ## App Sandboxはv1では無効（意図的）
 
 Claude CodeのKeychain項目への他アプリからのアクセスと非互換になる可能性が高いため。Mac App Store配布はv1対象外。

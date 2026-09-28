@@ -27,9 +27,7 @@ struct PopoverView: View {
             Divider()
 
             Button(NSLocalizedString("menu.settings", comment: "")) {
-                // SettingsLink requires macOS 14; this selector is the same
-                // mechanism it uses under the hood and works from macOS 13.
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                SettingsWindowController.shared.show(viewModel: viewModel)
             }
             .buttonStyle(.plain)
 
