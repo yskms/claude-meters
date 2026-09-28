@@ -38,8 +38,8 @@ final class SettingsWindowController {
             // this window is open, instead of only updating on the next
             // show() call.
             languageObserver = LocalizationManager.shared.$language
-                .sink { [weak window] _ in
-                    window?.title = LocalizationManager.shared.string("menu.settings")
+                .sink { [weak window] newLanguage in
+                    window?.title = LocalizationManager.shared.string("menu.settings", for: newLanguage)
                 }
         }
         NSApp.activate(ignoringOtherApps: true)

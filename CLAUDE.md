@@ -35,7 +35,7 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 
 `SettingsWindowController`（`App/SettingsWindowController.swift`）がSwiftUIの`Settings`シーンを使わず、`NSWindow(contentViewController:)`+`NSHostingController`で設定ウィンドウを直接生成・表示している。かつては`NSApp.sendAction(Selector(("showSettingsWindow:")), ...)`という非公開セレクタで`Settings`シーンを開こうとしていたが、このアプリは`LSUIElement`（Dockアイコンなし）のため実機では機能せず、設定ボタンを押しても何も起きなかった（Consoleに`Please use SettingsLink for opening the Settings scene.`という警告が出るのみでウィンドウは開かない）。`SettingsLink`はmacOS 14以降限定でmacOS 13をサポートできないため採用せず、自前のNSWindow管理に置き換えた。`ClaudeMetersApp.swift`に`Settings { }`シーンは存在しない。
 
-- `NSWindow(contentRect: .zero, ...)`で作ってから`contentView`を設定し`center()`を呼ぶ、という順序にはしないこと。サイズ確定前に`center()`すると、ウィンドウ中心ではなく左下角が画面中央に来た状態でその後コンテンツに合わせて右上へ広がり、見た目上センタリングされない。`NSWindow(contentViewController:)`はコンテンツのfitting sizeでウィンドウを先に確定させるため、`center()`より前にこちらを使う。
+- `NSWindow(contentRect: .zero, ...)`で作ってから`contentView`を設定し`center()`を呼ぶ、という順序にはしないこと。AppKitのドキュメント上、サイズ確定前に`center()`すると、ウィンドウ中心ではなく左下角が画面中央に来た状態でその後コンテンツに合わせて広がり、見た目上センタリングされないおそれがある（この具体的な崩れを実機のスクリーンショットで再現・確認したわけではない）。`NSWindow(contentViewController:)`はコンテンツのfitting sizeでウィンドウを先に確定させてから`center()`できるため、そちらを使う。
 
 ## 文言は必ず`LocalizationManager`経由で取得する
 
@@ -44,7 +44,8 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 - `LocalizationManager`はユーザーが選んだ言語のBundleを自前で解決しており、`NSLocalizedString`等のSwiftUI/Foundation標準の仕組みはOSの言語設定しか見ない。直接呼ぶと、システム言語と異なる言語を選んでいるときにその箇所だけ翻訳されずOS言語のまま表示される
 - `Text("Claude Meters")`や`Text("–")`のような、そもそも翻訳不要な文字列リテラルは対象外
 - 文言を表示するViewは`LocalizationManager.shared`を`@ObservedObject`で監視すること（`PopoverView`・`SettingsView`・`MenuBarMetersView`・`UsageRingView`を参照）。監視していないと、`l10n.string()`を使っていても言語切替時にViewが再描画されない
-- 日付・相対時刻など`Locale`を扱うAPI（`RelativeDateTimeFormatter`、`Date.FormatStyle`等）は`LocalizationManager.shared.locale`（地域設定は維持したまま言語だけ差し替えたLocale、システム追従時は`nil`）を明示的に渡すこと。渡さないと`Locale.current`（システム言語）で書式化される
+- 日付・相対時刻など`Locale`を扱うAPI（`RelativeDateTimeFormatter`、`Date.FormatStyle`等）は`LocalizationManager.shared.locale`（言語だけ差し替え、地域コードは引き継いだLocale、システム追従時は`nil`）を明示的に渡すこと。渡さないと`Locale.current`（システム言語）で書式化される。ただし引き継がれるのは地域コードの既定値のみで、「24時間表示」のようにシステム環境設定で個別に上書きした項目までは反映されない
+- `LocalizationManager.$language`をCombineで購読するときは、クロージャが受け取った新しい値を使うこと。`@Published`は値が実際に書き換わる前（`willSet`）に新しい値を流すため、購読先で`LocalizationManager.shared.language`を読み直すと1回古い値を参照してしまう（`string(_:for:)`に新しい値を渡すこと）
 
 ## App Sandboxはv1では無効（意図的）
 
