@@ -39,7 +39,12 @@ struct SettingsView: View {
             }
         }
         .padding()
-        .frame(width: 320)
+        // A fixed width clipped longer translations (Italian/Portuguese/
+        // Spanish labels like "Intervalo de actualización" didn't fit in
+        // 320pt). `minWidth` keeps the original size for short-label
+        // languages while letting the window's fitting size (see
+        // SettingsWindowController) grow for longer ones.
+        .frame(minWidth: 320)
         .environment(\.locale, l10n.locale ?? .current)
     }
 
