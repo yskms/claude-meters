@@ -43,9 +43,16 @@ final class ClaudeUsageProvider: UsageProvider {
             throw UsageProviderError.invalidResponse
         }
         do {
-            return try Self.parseResponse(statusCode: http.statusCode, data: data, fetchedAt: Date())
+            let snapshot = try Self.parseResponse(statusCode: http.statusCode, data: data, fetchedAt: Date())
+            // Logged (without values) so the success/429 cadence can be read
+            // from the log alongside the failures.
+            Self.logger.notice("Usage fetch succeeded: status=\(http.statusCode, privacy: .public)")
+            return snapshot
+        } catch UsageProviderError.unexpectedStatus(let status) {
+            Self.logHTTPFailure(status: status, http: http, data: data)
+            throw UsageProviderError.unexpectedStatus(status)
         } catch {
-            Self.logFailure(error, http: http, data: data)
+            Self.logShapeFailure(error, data: data)
             throw error
         }
     }
@@ -69,12 +76,31 @@ final class ClaudeUsageProvider: UsageProvider {
         return UsageSnapshot(session: session, weekly: weekly, fetchedAt: fetchedAt)
     }
 
-    private static func logFailure(_ error: Error, http: HTTPURLResponse, data: Data) {
+    /// Non-2xx only: these bodies are short API error objects (e.g.
+    /// `rate_limit_error`), so a prefix is logged as-is.
+    private static func logHTTPFailure(status: Int, http: HTTPURLResponse, data: Data) {
         let retryAfter = http.value(forHTTPHeaderField: "Retry-After") ?? "-"
-        // Error bodies are short API error objects; the prefix is enough to
-        // see e.g. the error type without dumping a full usage payload.
         let bodyPrefix = String(decoding: data.prefix(300), as: UTF8.self)
-        logger.error("Usage fetch failed: \(String(describing: error), privacy: .public) status=\(http.statusCode, privacy: .public) retry-after=\(retryAfter, privacy: .public) body=\(bodyPrefix, privacy: .public)")
+        logger.error("Usage fetch failed: status=\(status, privacy: .public) retry-after=\(retryAfter, privacy: .public) body=\(bodyPrefix, privacy: .public)")
+    }
+
+    /// 2xx with an unexpected shape: the body is (part of) a real usage
+    /// payload, so only its key structure is logged, never the values.
+    private static func logShapeFailure(_ error: Error, data: Data) {
+        let keys = Self.keyStructure(of: data)
+        logger.error("Usage fetch failed: \(String(describing: error), privacy: .public) keys=\(keys, privacy: .public)")
+    }
+
+    /// e.g. `five_hour{resets_at,utilization} seven_day{...}`, or
+    /// `<not a JSON object>`. Values are dropped.
+    static func keyStructure(of data: Data) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return "<not a JSON object>"
+        }
+        return json.keys.sorted().map { key in
+            guard let nested = json[key] as? [String: Any] else { return key }
+            return "\(key){\(nested.keys.sorted().joined(separator: ","))}"
+        }.joined(separator: " ")
     }
 
     private func readAccessToken() throws -> String {

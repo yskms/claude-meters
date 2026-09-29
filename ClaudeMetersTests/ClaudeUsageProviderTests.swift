@@ -135,6 +135,19 @@ final class ClaudeUsageProviderTests: XCTestCase {
         }
     }
 
+    // MARK: - keyStructure
+
+    func testKeyStructureDropsValues() {
+        let structure = ClaudeUsageProvider.keyStructure(of: validBody)
+        XCTAssertEqual(structure, "five_hour{resets_at,utilization} seven_day{resets_at,utilization}")
+        XCTAssertFalse(structure.contains("16"))
+        XCTAssertFalse(structure.contains("2026"))
+    }
+
+    func testKeyStructureNonObject() {
+        XCTAssertEqual(ClaudeUsageProvider.keyStructure(of: Data("[1,2]".utf8)), "<not a JSON object>")
+    }
+
     // MARK: - runProcess
 
     func testRunProcessReturnsStdoutOnSuccess() {
