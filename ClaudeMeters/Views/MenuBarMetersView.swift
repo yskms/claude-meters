@@ -11,47 +11,46 @@ struct MenuBarMetersView: View {
     @ObservedObject private var l10n = LocalizationManager.shared
 
     var body: some View {
-        Image(nsImage: renderedImage)
+        let state = viewModel.displayState()
+        Image(nsImage: renderedImage(state))
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(accessibilityLabel)
-    }
-
-    // Suppresses stale percentages on fetch failure instead of leaving the
-    // previous successful snapshot's numbers on screen — matches PopoverView,
-    // which hides the same numbers via `displaySnapshot`.
-    private var displaySnapshot: UsageSnapshot? {
-        viewModel.lastFetchFailed ? nil : viewModel.snapshot
+            .accessibilityLabel(accessibilityLabel(state))
     }
 
     // The rendered NSImage carries no accessibility info of its own — the
     // labels set on UsageRingView never reach VoiceOver once flattened to a
     // bitmap, so the combined label has to be built and attached here.
-    private var accessibilityLabel: String {
+    private func accessibilityLabel(_ state: UsageDisplayState) -> String {
         let sessionText: String
-        if let percent = displaySnapshot?.session.percentUsed {
+        if let percent = state.session?.percentUsed {
             sessionText = String(format: l10n.string("accessibility.session_percent_used"), percent)
         } else {
             sessionText = l10n.string("accessibility.session_unavailable")
         }
 
         let weeklyText: String
-        if let percent = displaySnapshot?.weekly.percentUsed {
+        if let percent = state.weekly?.percentUsed {
             weeklyText = String(format: l10n.string("accessibility.weekly_percent_used"), percent)
         } else {
             weeklyText = l10n.string("accessibility.weekly_unavailable")
         }
 
         var parts = [sessionText, weeklyText]
-        if viewModel.lastFetchFailed {
+        if let staleSince = state.staleSince {
+            // Same wording as the Popover's status line, so VoiceOver users
+            // hear that the percentages above are from an earlier fetch.
+            let time = staleSince.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: l10n.locale ?? .current))
+            parts.append(String(format: l10n.string("status.stale_values"), time))
+        } else if viewModel.lastFetchFailed {
             parts.append(l10n.string("accessibility.update_failed"))
         }
         return parts.joined(separator: " ")
     }
 
-    private var renderedImage: NSImage {
+    private func renderedImage(_ state: UsageDisplayState) -> NSImage {
         let content = MetersGlyph(
-            sessionPercent: displaySnapshot?.session.percentUsed,
-            weeklyPercent: displaySnapshot?.weekly.percentUsed
+            sessionPercent: state.session?.percentUsed,
+            weeklyPercent: state.weekly?.percentUsed
         )
         let renderer = ImageRenderer(content: content)
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2

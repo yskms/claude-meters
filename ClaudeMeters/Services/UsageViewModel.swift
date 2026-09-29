@@ -6,6 +6,14 @@ final class UsageViewModel: ObservableObject {
     @Published private(set) var snapshot: UsageSnapshot?
     @Published private(set) var lastError: UsageProviderError?
     var lastFetchFailed: Bool { lastError != nil }
+
+    /// Evaluated at render time; views re-render on every fetch attempt
+    /// (lastError/snapshot are reassigned each time), so the 15-minute and
+    /// resets_at cutoffs take effect at the next attempt — at most the 300 s
+    /// backoff cap late.
+    func displayState(now: Date = Date()) -> UsageDisplayState {
+        UsageDisplayState.make(snapshot: snapshot, lastError: lastError, now: now)
+    }
     @Published var refreshInterval: TimeInterval {
         didSet {
             guard refreshInterval != oldValue else { return }

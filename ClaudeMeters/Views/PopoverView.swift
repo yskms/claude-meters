@@ -6,6 +6,7 @@ struct PopoverView: View {
     @ObservedObject private var l10n = LocalizationManager.shared
 
     var body: some View {
+        let state = viewModel.displayState()
         VStack(spacing: 12) {
             Text("Claude Meters")
                 .font(.headline)
@@ -13,17 +14,17 @@ struct PopoverView: View {
             HStack(spacing: 32) {
                 meterColumn(
                     title: l10n.string("meter.session"),
-                    usage: displaySnapshot?.session
+                    usage: state.session
                 )
                 meterColumn(
                     title: l10n.string("meter.weekly"),
-                    usage: displaySnapshot?.weekly
+                    usage: state.weekly
                 )
             }
 
             Divider()
 
-            statusLine
+            statusLine(state)
 
             Divider()
 
@@ -43,31 +44,26 @@ struct PopoverView: View {
         .environment(\.locale, l10n.locale ?? .current)
     }
 
-    /// Suppresses the ring/percent display on fetch failure instead of
-    /// leaving the previous successful snapshot's numbers on screen — the
-    /// status line already switches to an error message, and showing a
-    /// stale percentage alongside it reads as if that number is current.
-    private var displaySnapshot: UsageSnapshot? {
-        viewModel.lastFetchFailed ? nil : viewModel.snapshot
+    @ViewBuilder
+    private func statusLine(_ state: UsageDisplayState) -> some View {
+        if let staleSince = state.staleSince {
+            statusText(String(format: l10n.string("status.stale_values"), timeString(staleSince)))
+        } else if let error = viewModel.lastError {
+            statusText(errorMessage(for: error))
+        } else if let fetchedAt = viewModel.snapshot?.fetchedAt {
+            statusText(String(format: l10n.string("status.last_updated"), timeString(fetchedAt)))
+        }
     }
 
-    @ViewBuilder
-    private var statusLine: some View {
-        if let error = viewModel.lastError {
-            Text(errorMessage(for: error))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        } else if let fetchedAt = viewModel.snapshot?.fetchedAt {
-            Text(
-                String(
-                    format: l10n.string("status.last_updated"),
-                    fetchedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: l10n.locale ?? .current))
-                )
-            )
+    private func statusText(_ text: String) -> some View {
+        Text(text)
             .font(.caption)
             .foregroundStyle(.secondary)
-        }
+            .multilineTextAlignment(.center)
+    }
+
+    private func timeString(_ date: Date) -> String {
+        date.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: l10n.locale ?? .current))
     }
 
     /// Expands the button's hit area to the full row instead of just the

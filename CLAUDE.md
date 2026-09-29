@@ -21,6 +21,10 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 
 `restartLoop()`の`currentGeneration`カウンタと`await previousTask?.value`は冗長に見えるが必須。`fetchUsage()`内のKeychainアクセスは同期処理でOSの許可ダイアログ待ちになることがあり、`Task.cancel()`では中断できない。世代チェックと「前のTaskの終了を待ってから次を開始する」処理の両方を外すと、古い取得処理と新しい取得処理が並行実行されたり、古い結果が新しい状態を上書きするレースコンディションが再発する（過去に複数回レビューで指摘・修正された箇所）。
 
+## メーター表示の可否は`UsageDisplayState`だけで決める
+
+取得失敗時に前回値を出すか「–」にするかは、`UsageDisplayState.make`（`Models/UsageData.swift`）の1箇所で判定し、メニューバー・Popover（リングとリセット時刻）・VoiceOverはすべてその結果だけを使う。Viewで`viewModel.snapshot`や`lastFetchFailed`を見てメーターの表示可否を個別に判定しないこと。過去に「失敗中は値を隠す」修正と「一時的な失敗では値を残す」修正が入れ違い、表示箇所ごとに挙動がずれる懸念があったため。規則の詳細はREQUIREMENTS.mdの「データ取得失敗時」を参照。
+
 ## メニューバー表示がImageRenderer経由である理由
 
 `MenuBarMetersView`は`MenuBarExtra`の`label`に直接SwiftUIのHStack/Shapeを渡していない。実際に試したところ、複数リングのうち1つしか描画されない・Circleのストロークが消えるという不具合が発生したため、`ImageRenderer`で一度`NSImage`に焼き込んでから渡している。

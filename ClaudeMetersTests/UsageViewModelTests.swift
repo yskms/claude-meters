@@ -44,10 +44,10 @@ final class UsageViewModelTests: XCTestCase {
         }
     }
 
-    /// Guards the contract PopoverView/MenuBarMetersView rely on to decide
-    /// whether to hide stale numbers: on failure, the ViewModel keeps the
-    /// last successful snapshot around (it does not clear it to nil) while
-    /// setting lastError — hiding is the view layer's job, not the model's.
+    /// Guards the contract UsageDisplayState relies on to decide whether to
+    /// hide stale numbers: on failure, the ViewModel keeps the last
+    /// successful snapshot around (it does not clear it to nil) while
+    /// setting lastError — hiding is UsageDisplayState's job, not the model's.
     /// A later successful fetch must still fully replace the old snapshot.
     func testFetchFailureAfterSuccessKeepsSnapshotThenRecovers() async {
         let secondSnapshot = UsageSnapshot(
