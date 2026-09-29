@@ -111,7 +111,7 @@ struct PopoverView: View {
         switch error {
         case .credentialUnavailable:
             return l10n.string("error.credential_unavailable")
-        case .invalidResponse, .network:
+        case .unexpectedStatus, .invalidResponse, .network:
             return l10n.string("error.fetch_failed")
         }
     }

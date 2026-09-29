@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Reads Claude Code's own locally-stored OAuth credential (never manages
 /// credentials of its own) and calls Anthropic's usage endpoint.
@@ -13,6 +14,10 @@ final class ClaudeUsageProvider: UsageProvider {
     /// unlock a locked keychain), yet bounded so the update loop can't stall.
     private let securityCLITimeout: TimeInterval = 60
     private let usageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
+    /// Failures are logged at .error so they persist and can be reviewed
+    /// later with `log show --predicate 'subsystem == "com.yskms.ClaudeMeters"'`.
+    /// The access token is never logged.
+    private static let logger = Logger(subsystem: "com.yskms.ClaudeMeters", category: "usage")
 
     func fetchUsage() async throws -> UsageSnapshot {
         let token = try readAccessToken()
@@ -30,12 +35,27 @@ final class ClaudeUsageProvider: UsageProvider {
         } catch let urlError as URLError where urlError.code == .cancelled {
             throw CancellationError()
         } catch {
+            Self.logger.error("Usage request failed: \(String(describing: error), privacy: .public)")
             throw UsageProviderError.network(error)
         }
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse else {
+            Self.logger.error("Usage response was not HTTP")
             throw UsageProviderError.invalidResponse
         }
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        do {
+            return try Self.parseResponse(statusCode: http.statusCode, data: data, fetchedAt: Date())
+        } catch {
+            Self.logFailure(error, http: http, data: data)
+            throw error
+        }
+    }
+
+    /// Pure so status/body handling is unit-testable without networking.
+    static func parseResponse(statusCode: Int, data: Data, fetchedAt: Date) throws -> UsageSnapshot {
+        guard (200..<300).contains(statusCode) else {
+            throw UsageProviderError.unexpectedStatus(statusCode)
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw UsageProviderError.invalidResponse
         }
         // This endpoint is undocumented (see docs/REQUIREMENTS.md). If its
@@ -46,7 +66,15 @@ final class ClaudeUsageProvider: UsageProvider {
             throw UsageProviderError.invalidResponse
         }
 
-        return UsageSnapshot(session: session, weekly: weekly, fetchedAt: Date())
+        return UsageSnapshot(session: session, weekly: weekly, fetchedAt: fetchedAt)
+    }
+
+    private static func logFailure(_ error: Error, http: HTTPURLResponse, data: Data) {
+        let retryAfter = http.value(forHTTPHeaderField: "Retry-After") ?? "-"
+        // Error bodies are short API error objects; the prefix is enough to
+        // see e.g. the error type without dumping a full usage payload.
+        let bodyPrefix = String(decoding: data.prefix(300), as: UTF8.self)
+        logger.error("Usage fetch failed: \(String(describing: error), privacy: .public) status=\(http.statusCode, privacy: .public) retry-after=\(retryAfter, privacy: .public) body=\(bodyPrefix, privacy: .public)")
     }
 
     private func readAccessToken() throws -> String {
@@ -56,14 +84,17 @@ final class ClaudeUsageProvider: UsageProvider {
         // fallback would also rarely help — a locked keychain or an ACL
         // without `security` makes the CLI prompt (not fail), and a missing
         // item is missing for both.
-        guard case .success(let data) = Self.runProcess(
+        let result = Self.runProcess(
             executableURL: URL(fileURLWithPath: "/usr/bin/security"),
             arguments: ["find-generic-password", "-s", keychainService, "-w"],
             timeout: securityCLITimeout
-        ) else {
+        )
+        guard case .success(let data) = result else {
+            Self.logger.error("Keychain read via security failed: \(String(describing: result), privacy: .public)")
             throw UsageProviderError.credentialUnavailable
         }
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            Self.logger.error("Keychain item is not the expected JSON")
             throw UsageProviderError.credentialUnavailable
         }
 
@@ -74,6 +105,7 @@ final class ClaudeUsageProvider: UsageProvider {
            let token = oauth["accessToken"] as? String {
             return token
         }
+        Self.logger.error("Keychain item has no accessToken")
         throw UsageProviderError.credentialUnavailable
     }
 

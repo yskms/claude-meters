@@ -75,6 +75,66 @@ final class ClaudeUsageProviderTests: XCTestCase {
         XCTAssertNil(ClaudeUsageProvider.parseDate("not a date"))
     }
 
+    // MARK: - parseResponse
+
+    private let validBody = Data("""
+        {"five_hour":{"utilization":16.0,"resets_at":"2026-09-26T02:19:59.582064+00:00"},
+         "seven_day":{"utilization":42.0,"resets_at":"2026-09-30T00:00:00+00:00"}}
+        """.utf8)
+
+    private func assertThrows(
+        statusCode: Int, body: Data, file: StaticString = #filePath, line: UInt = #line,
+        _ check: (UsageProviderError) -> Bool
+    ) {
+        do {
+            _ = try ClaudeUsageProvider.parseResponse(statusCode: statusCode, data: body, fetchedAt: Date())
+            XCTFail("expected an error", file: file, line: line)
+        } catch let error as UsageProviderError {
+            XCTAssertTrue(check(error), "unexpected error \(error)", file: file, line: line)
+        } catch {
+            XCTFail("unexpected error type \(error)", file: file, line: line)
+        }
+    }
+
+    func testParseResponseSuccess() throws {
+        let fetchedAt = Date()
+        let snapshot = try ClaudeUsageProvider.parseResponse(statusCode: 200, data: validBody, fetchedAt: fetchedAt)
+        XCTAssertEqual(snapshot.session.percentUsed, 16)
+        XCTAssertEqual(snapshot.weekly.percentUsed, 42)
+        XCTAssertEqual(snapshot.fetchedAt, fetchedAt)
+    }
+
+    func testParseResponseKeepsStatusCodeForNon2xx() {
+        for status in [401, 403, 429, 500, 503] {
+            assertThrows(statusCode: status, body: Data(#"{"error":{}}"#.utf8)) {
+                if case .unexpectedStatus(let code) = $0 { return code == status }
+                return false
+            }
+        }
+    }
+
+    func testParseResponseNon2xxIsNotInvalidResponseEvenWithValidBody() {
+        assertThrows(statusCode: 429, body: validBody) {
+            if case .unexpectedStatus(429) = $0 { return true }
+            return false
+        }
+    }
+
+    func testParseResponseMalformedJSONIsInvalidResponse() {
+        assertThrows(statusCode: 200, body: Data("not json".utf8)) {
+            if case .invalidResponse = $0 { return true }
+            return false
+        }
+    }
+
+    func testParseResponseMissingMeterIsInvalidResponse() {
+        let body = Data(#"{"five_hour":{"utilization":16.0,"resets_at":"2026-09-26T02:19:59+00:00"}}"#.utf8)
+        assertThrows(statusCode: 200, body: body) {
+            if case .invalidResponse = $0 { return true }
+            return false
+        }
+    }
+
     // MARK: - runProcess
 
     func testRunProcessReturnsStdoutOnSuccess() {
