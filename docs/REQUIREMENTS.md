@@ -78,6 +78,7 @@ Weeklyのリセット日時が固定曜日かローリング7日かは、Claude 
 - API・Keychain形式への依存はUsageProvider内に隔離し、他層に漏れ出させない
 - ad-hoc署名は再ビルドのたびに実質的に別アプリ扱いとなり、Keychainの許可ダイアログが再度表示される
 - Developer ID署名（同一の署名）に切り替えても、上記の通りトークン更新周期に応じて許可ダイアログが繰り返し表示される。v1ではこれを許容し、Popoverに案内（「許可してください」）を表示することで対応する。回避策は無い
+- （2026-09-29追記）原因は、Claude Codeがトークン更新時に`security add-generic-password -U`で項目を上書きし、ACLが`/usr/bin/security`のみに戻ることと判明（作成日時は変わらず更新日時のみ変わる）。Keychainの読み取りを`/usr/bin/security find-generic-password -w`のサブプロセス経由に変更し、ダイアログが再表示されないようにした
 
 **判定**
 

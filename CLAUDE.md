@@ -14,7 +14,7 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 - `resets_at`（リセット日時）はAPIが返す値をそのまま使う。固定曜日かローリング7日かをアプリ側で計算・推測しない
 - Keychainの値は`{"claudeAiOauth":{"accessToken": ...}}`というJSON構造。生の文字列をそのままBearerトークンにはできない
 - `ClaudeUsageProvider.parseMeter`は`utilization`と`resets_at`の両方が揃わない限り`nil`を返し、呼び出し元は`fetchUsage()`全体を失敗させる。未ドキュメントAPIの形式変更を「取得成功だが値が空」ではなく明確な失敗として検知するための意図的な設計
-- Keychainアクセス許可ダイアログは、Claude Code側がトークン更新時にKeychain項目を作り直している（と考えられる）ため、署名が同一でも数十分〜1時間程度の間隔で再表示される。アプリ側で回避する方法はない（バグではない）
+- Keychainは`SecItemCopyMatching`ではなく`/usr/bin/security find-generic-password -w`をサブプロセスで実行して読む（`SecItemCopyMatching`はフォールバックのみ）。Claude Codeはトークン更新のたびに`security add-generic-password -U`で項目を上書きし、そのときACLが`/usr/bin/security`のみを信頼する状態に戻るため、直接読むと「常に許可」が1日数回リセットされてパスワードダイアログが再表示される。同じ`security`経由で読めばACLに載ったままなのでダイアログが出ない（2026-09-29確認）。直接呼び出しに戻さないこと
 
 ## UsageViewModelの更新ループを単純化しない
 

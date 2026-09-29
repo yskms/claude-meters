@@ -48,16 +48,7 @@ final class ClaudeUsageProvider: UsageProvider {
     }
 
     private func readAccessToken() throws -> String {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-        guard status == errSecSuccess,
-              let data = item as? Data,
+        guard let data = readCredentialViaSecurityCLI() ?? readCredentialViaSecItem(),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw UsageProviderError.credentialUnavailable
         }
@@ -70,6 +61,46 @@ final class ClaudeUsageProvider: UsageProvider {
             return token
         }
         throw UsageProviderError.credentialUnavailable
+    }
+
+    /// Reads the item through `/usr/bin/security` instead of calling
+    /// SecItemCopyMatching directly. Claude Code writes this item with
+    /// `security add-generic-password -U` on every token refresh, which
+    /// resets the item's ACL to trust only `/usr/bin/security` — so any
+    /// "Always Allow" granted to this app is lost a few times a day and the
+    /// Keychain password prompt reappears. Going through the same binary
+    /// keeps us on the ACL and avoids the prompt. Do not replace this with
+    /// SecItemCopyMatching.
+    private func readCredentialViaSecurityCLI() -> Data? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["find-generic-password", "-s", keychainService, "-w"]
+        let stdout = Pipe()
+        process.standardOutput = stdout
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+        let data = stdout.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0, !data.isEmpty else { return nil }
+        return data
+    }
+
+    /// Fallback for when the CLI path fails (e.g. the item was written by
+    /// something other than `/usr/bin/security`). May show the Keychain prompt.
+    private func readCredentialViaSecItem() -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess else { return nil }
+        return item as? Data
     }
 
     static func parseMeter(_ dict: [String: Any]?) -> MeterUsage? {
