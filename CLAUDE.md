@@ -14,8 +14,8 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 - `resets_at`（リセット日時）はAPIが返す値をそのまま使う。固定曜日かローリング7日かをアプリ側で計算・推測しない
 - Keychainの値は`{"claudeAiOauth":{"accessToken": ...}}`というJSON構造。生の文字列をそのままBearerトークンにはできない
 - `ClaudeUsageProvider.parseMeter`は`utilization`と`resets_at`の両方が揃わない限り`nil`を返し、呼び出し元は`fetchUsage()`全体を失敗させる。未ドキュメントAPIの形式変更を「取得成功だが値が空」ではなく明確な失敗として検知するための意図的な設計
-- Keychainは`SecItemCopyMatching`ではなく`/usr/bin/security find-generic-password -w`をサブプロセスで実行して読む（`SecItemCopyMatching`は`security`が異常終了した場合のフォールバックのみ）。Claude Codeはトークン更新のたびに`security add-generic-password -U`で項目を上書きしており（作成日時は変わらず更新日時だけが変わることを確認）、そのときACLが`/usr/bin/security`のみを信頼する状態に戻るため、直接読むと「常に許可」が1日数回リセットされてパスワードダイアログが再表示される、と考えられる（ACLの中身は未確認）。`security`経由ならダイアログなしで読めることは確認済みだが、トークン更新後も再表示されないかは2026-09-29時点で検証中。直接呼び出しに戻さないこと
-- `security`プロセスには15秒のタイムアウトを設けており、タイムアウト時はフォールバックせず取得失敗にする。`Task.cancel()`で止められない同期処理が無期限に止まると、`UsageViewModel`の更新ループ全体が止まるため（下記参照）
+- Keychainは`SecItemCopyMatching`ではなく`/usr/bin/security find-generic-password -w`をサブプロセスで実行して読む。Claude Codeはトークン更新のたびに`security add-generic-password -U`で項目を上書きしており（作成日時は変わらず更新日時だけが変わることを確認）、そのときACLが`/usr/bin/security`のみを信頼する状態に戻るため、直接読むと「常に許可」が1日数回リセットされてパスワードダイアログが再表示される、と考えられる（ACLの中身は未確認）。`security`経由ならダイアログなしで読めることは確認済みだが、トークン更新後も再表示されないかは2026-09-29時点で検証中。直接呼び出しに戻さないこと
+- `security`プロセスには60秒のタイムアウトを設けている（`security`自身がロック解除等のダイアログを出した場合にパスワード入力が間に合う長さ）。また、失敗時に`SecItemCopyMatching`へフォールバックしない。いずれも、`Task.cancel()`で止められない同期処理が無期限に止まると`UsageViewModel`の更新ループ全体が止まるため（下記参照）。キーチェーンのロックや`security`がACLに無い場合は、CLIが失敗せずダイアログを出すので、フォールバックしても得られるものはほぼ無い
 
 ## UsageViewModelの更新ループを単純化しない
 

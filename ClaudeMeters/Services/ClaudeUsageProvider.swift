@@ -1,5 +1,4 @@
 import Foundation
-import Security
 
 /// Reads Claude Code's own locally-stored OAuth credential (never manages
 /// credentials of its own) and calls Anthropic's usage endpoint.
@@ -10,7 +9,9 @@ import Security
 /// used exactly as returned; this type never computes a reset time itself.
 final class ClaudeUsageProvider: UsageProvider {
     private let keychainService = "Claude Code-credentials"
-    private let securityCLITimeout: TimeInterval = 15
+    /// Long enough to type a password if `security` itself prompts (e.g. to
+    /// unlock a locked keychain), yet bounded so the update loop can't stall.
+    private let securityCLITimeout: TimeInterval = 60
     private let usageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
 
     func fetchUsage() async throws -> UsageSnapshot {
@@ -49,24 +50,20 @@ final class ClaudeUsageProvider: UsageProvider {
     }
 
     private func readAccessToken() throws -> String {
-        let data: Data?
-        switch Self.runProcess(
+        // No SecItemCopyMatching fallback on failure: it can block
+        // indefinitely on the Keychain prompt, and a fetch that never returns
+        // stalls UsageViewModel's loop (it awaits the previous Task). A
+        // fallback would also rarely help — a locked keychain or an ACL
+        // without `security` makes the CLI prompt (not fail), and a missing
+        // item is missing for both.
+        guard case .success(let data) = Self.runProcess(
             executableURL: URL(fileURLWithPath: "/usr/bin/security"),
             arguments: ["find-generic-password", "-s", keychainService, "-w"],
             timeout: securityCLITimeout
-        ) {
-        case .success(let output):
-            data = output
-        case .failed:
-            data = readCredentialViaSecItem()
-        case .timedOut:
-            // Don't fall back here: SecItemCopyMatching can block just as
-            // indefinitely, and a fetch that never returns stalls
-            // UsageViewModel's loop (it awaits the previous Task).
-            data = nil
+        ) else {
+            throw UsageProviderError.credentialUnavailable
         }
-        guard let data,
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw UsageProviderError.credentialUnavailable
         }
 
@@ -136,21 +133,6 @@ final class ClaudeUsageProvider: UsageProvider {
         guard drained.wait(timeout: .now() + 1) == .success else { return .timedOut }
         guard process.terminationStatus == 0, !output.isEmpty else { return .failed }
         return .success(output)
-    }
-
-    /// Fallback for when the CLI exits with an error (e.g. the item was
-    /// written by something other than `/usr/bin/security`). May show the
-    /// Keychain prompt.
-    private func readCredentialViaSecItem() -> Data? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        var item: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess else { return nil }
-        return item as? Data
     }
 
     static func parseMeter(_ dict: [String: Any]?) -> MeterUsage? {
