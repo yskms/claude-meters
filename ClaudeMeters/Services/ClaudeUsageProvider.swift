@@ -76,12 +76,26 @@ final class ClaudeUsageProvider: UsageProvider {
         return UsageSnapshot(session: session, weekly: weekly, fetchedAt: fetchedAt)
     }
 
-    /// Non-2xx only: these bodies are short API error objects (e.g.
-    /// `rate_limit_error`), so a prefix is logged as-is.
+    /// Logs only known diagnostic fields, never the raw body: this endpoint is
+    /// undocumented, so a proxy/auth/server failure could return a body of
+    /// any shape.
     private static func logHTTPFailure(status: Int, http: HTTPURLResponse, data: Data) {
         let retryAfter = http.value(forHTTPHeaderField: "Retry-After") ?? "-"
-        let bodyPrefix = String(decoding: data.prefix(300), as: UTF8.self)
-        logger.error("Usage fetch failed: status=\(status, privacy: .public) retry-after=\(retryAfter, privacy: .public) body=\(bodyPrefix, privacy: .public)")
+        let requestID = http.value(forHTTPHeaderField: "request-id") ?? "-"
+        let summary = Self.errorSummary(of: data)
+        logger.error("Usage fetch failed: status=\(status, privacy: .public) retry-after=\(retryAfter, privacy: .public) request-id=\(requestID, privacy: .public) \(summary, privacy: .public)")
+    }
+
+    /// e.g. `type=rate_limit_error message=Rate limited. …`, or just the body
+    /// length when it isn't an Anthropic-style `{"error": {...}}` object.
+    static func errorSummary(of data: Data) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let error = json["error"] as? [String: Any] else {
+            return "body=<\(data.count) bytes, not an API error object>"
+        }
+        let type = error["type"] as? String ?? "-"
+        let message = (error["message"] as? String).map { String($0.prefix(200)) } ?? "-"
+        return "type=\(type) message=\(message)"
     }
 
     /// 2xx with an unexpected shape: the body is (part of) a real usage

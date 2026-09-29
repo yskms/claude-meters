@@ -148,6 +148,20 @@ final class ClaudeUsageProviderTests: XCTestCase {
         XCTAssertEqual(ClaudeUsageProvider.keyStructure(of: Data("[1,2]".utf8)), "<not a JSON object>")
     }
 
+    // MARK: - errorSummary
+
+    func testErrorSummaryExtractsKnownFields() {
+        let body = Data(#"{"error":{"type":"rate_limit_error","message":"Rate limited.","extra":"x"}}"#.utf8)
+        XCTAssertEqual(ClaudeUsageProvider.errorSummary(of: body), "type=rate_limit_error message=Rate limited.")
+    }
+
+    func testErrorSummaryOmitsNonErrorBody() {
+        let body = Data("<html>secret page</html>".utf8)
+        let summary = ClaudeUsageProvider.errorSummary(of: body)
+        XCTAssertEqual(summary, "body=<\(body.count) bytes, not an API error object>")
+        XCTAssertFalse(summary.contains("secret"))
+    }
+
     // MARK: - runProcess
 
     func testRunProcessReturnsStdoutOnSuccess() {
