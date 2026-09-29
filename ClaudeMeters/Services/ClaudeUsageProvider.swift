@@ -10,6 +10,7 @@ import Security
 /// used exactly as returned; this type never computes a reset time itself.
 final class ClaudeUsageProvider: UsageProvider {
     private let keychainService = "Claude Code-credentials"
+    private let securityCLITimeout: TimeInterval = 15
     private let usageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
 
     func fetchUsage() async throws -> UsageSnapshot {
@@ -48,7 +49,23 @@ final class ClaudeUsageProvider: UsageProvider {
     }
 
     private func readAccessToken() throws -> String {
-        guard let data = readCredentialViaSecurityCLI() ?? readCredentialViaSecItem(),
+        let data: Data?
+        switch Self.runProcess(
+            executableURL: URL(fileURLWithPath: "/usr/bin/security"),
+            arguments: ["find-generic-password", "-s", keychainService, "-w"],
+            timeout: securityCLITimeout
+        ) {
+        case .success(let output):
+            data = output
+        case .failed:
+            data = readCredentialViaSecItem()
+        case .timedOut:
+            // Don't fall back here: SecItemCopyMatching can block just as
+            // indefinitely, and a fetch that never returns stalls
+            // UsageViewModel's loop (it awaits the previous Task).
+            data = nil
+        }
+        guard let data,
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw UsageProviderError.credentialUnavailable
         }
@@ -63,34 +80,67 @@ final class ClaudeUsageProvider: UsageProvider {
         throw UsageProviderError.credentialUnavailable
     }
 
-    /// Reads the item through `/usr/bin/security` instead of calling
-    /// SecItemCopyMatching directly. Claude Code writes this item with
-    /// `security add-generic-password -U` on every token refresh, which
-    /// resets the item's ACL to trust only `/usr/bin/security` — so any
-    /// "Always Allow" granted to this app is lost a few times a day and the
-    /// Keychain password prompt reappears. Going through the same binary
-    /// keeps us on the ACL and avoids the prompt. Do not replace this with
-    /// SecItemCopyMatching.
-    private func readCredentialViaSecurityCLI() -> Data? {
+    enum ProcessResult: Equatable {
+        case success(Data)
+        case failed
+        case timedOut
+    }
+
+    /// Runs a short-lived command and returns its stdout. The keychain is
+    /// read through `/usr/bin/security` instead of calling
+    /// SecItemCopyMatching directly: Claude Code appears to rewrite the item
+    /// with `security add-generic-password -U` on every token refresh, which
+    /// resets its ACL to trust only `/usr/bin/security`, so an "Always Allow"
+    /// granted to this app is lost a few times a day and the Keychain password
+    /// prompt reappears. Going through the same binary avoids the prompt. Do
+    /// not replace this with SecItemCopyMatching.
+    ///
+    /// Blocks the calling thread, but never longer than `timeout` (plus a
+    /// short grace period for termination), since Task cancellation cannot
+    /// interrupt it.
+    static func runProcess(executableURL: URL, arguments: [String], timeout: TimeInterval) -> ProcessResult {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        process.arguments = ["find-generic-password", "-s", keychainService, "-w"]
+        process.executableURL = executableURL
+        process.arguments = arguments
         let stdout = Pipe()
         process.standardOutput = stdout
         process.standardError = FileHandle.nullDevice
+
+        let exited = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in exited.signal() }
         do {
             try process.run()
         } catch {
-            return nil
+            return .failed
         }
-        let data = stdout.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        guard process.terminationStatus == 0, !data.isEmpty else { return nil }
-        return data
+
+        // Drain stdout concurrently so a large output can't fill the pipe
+        // buffer and keep the child from exiting.
+        var output = Data()
+        let drained = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            output = stdout.fileHandleForReading.readDataToEndOfFile()
+            drained.signal()
+        }
+
+        guard exited.wait(timeout: .now() + timeout) == .success else {
+            process.terminate()
+            if exited.wait(timeout: .now() + 1) == .timedOut {
+                kill(process.processIdentifier, SIGKILL)
+                _ = exited.wait(timeout: .now() + 1)
+            }
+            return .timedOut
+        }
+        // The child has exited, so its end of the pipe is closed and the read
+        // finishes; the timeout only guards against a grandchild holding it.
+        guard drained.wait(timeout: .now() + 1) == .success else { return .timedOut }
+        guard process.terminationStatus == 0, !output.isEmpty else { return .failed }
+        return .success(output)
     }
 
-    /// Fallback for when the CLI path fails (e.g. the item was written by
-    /// something other than `/usr/bin/security`). May show the Keychain prompt.
+    /// Fallback for when the CLI exits with an error (e.g. the item was
+    /// written by something other than `/usr/bin/security`). May show the
+    /// Keychain prompt.
     private func readCredentialViaSecItem() -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

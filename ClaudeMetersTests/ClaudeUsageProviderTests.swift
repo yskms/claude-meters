@@ -74,4 +74,38 @@ final class ClaudeUsageProviderTests: XCTestCase {
     func testParseDateRejectsGarbage() {
         XCTAssertNil(ClaudeUsageProvider.parseDate("not a date"))
     }
+
+    // MARK: - runProcess
+
+    func testRunProcessReturnsStdoutOnSuccess() {
+        let result = ClaudeUsageProvider.runProcess(
+            executableURL: URL(fileURLWithPath: "/bin/echo"), arguments: ["hello"], timeout: 5)
+        XCTAssertEqual(result, .success(Data("hello\n".utf8)))
+    }
+
+    func testRunProcessNonZeroExitIsFailed() {
+        let result = ClaudeUsageProvider.runProcess(
+            executableURL: URL(fileURLWithPath: "/usr/bin/false"), arguments: [], timeout: 5)
+        XCTAssertEqual(result, .failed)
+    }
+
+    func testRunProcessEmptyOutputIsFailed() {
+        let result = ClaudeUsageProvider.runProcess(
+            executableURL: URL(fileURLWithPath: "/usr/bin/true"), arguments: [], timeout: 5)
+        XCTAssertEqual(result, .failed)
+    }
+
+    func testRunProcessMissingExecutableIsFailed() {
+        let result = ClaudeUsageProvider.runProcess(
+            executableURL: URL(fileURLWithPath: "/nonexistent/binary"), arguments: [], timeout: 5)
+        XCTAssertEqual(result, .failed)
+    }
+
+    func testRunProcessTimesOutAndReturnsPromptly() {
+        let start = Date()
+        let result = ClaudeUsageProvider.runProcess(
+            executableURL: URL(fileURLWithPath: "/bin/sleep"), arguments: ["30"], timeout: 0.5)
+        XCTAssertEqual(result, .timedOut)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 5)
+    }
 }
