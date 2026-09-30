@@ -40,9 +40,9 @@ v0.1.1以降のリリースはDeveloper ID証明書で署名し、Appleの公証
 
 ## Usage情報の取得方法
 
-Claude Meters自身は認証情報を要求・保存しません。代わりに、Claude Codeがすでに保存しているOAuthトークン（macOS Keychainの`Claude Code-credentials`）を読み取り、Claude Code自身が使っているのと同じUsage APIを呼び出します。アクセスするたびにmacOS標準のKeychainアクセス許可ダイアログが表示されることがあり、（ログインパスワードで）許可するとこのトークンを読み取れるようになります。
+Claude Meters自身は認証情報を要求・保存しません。代わりに、Claude Codeがすでに保存しているOAuthトークン（macOS Keychainの`Claude Code-credentials`）を読み取り、Claude Code自身が使っているのと同じUsage APIを呼び出します。v0.1.7以降は、Claude Code自身がこの項目の保存に使っている`/usr/bin/security`コマンド経由で読み取るため、通常はKeychainの許可ダイアログは表示されません。Claude Codeがトークンを更新した後も、再承認は不要です。キーチェーンがロックされている場合などにダイアログが表示されたときは、（ログインパスワードで）許可してください。
 
-この許可は、ずっと有効なままにはならず、時々また表示されることがあります。Claude Code側がこのKeychain項目を定期的に作り直している（それに伴い「常に許可」の設定がリセットされる）ことが原因と考えられますが、これはClaude Meters側では制御できません。表示されたら、その都度許可してください。
+v0.1.6以前は、Claude Codeがトークンを更新するたびに「常に許可」の設定がリセットされ、1日に数回許可ダイアログが再表示されていました。該当する場合はv0.1.7以降に更新してください。
 
 このAPIはAnthropicの**公開・ドキュメント化されたAPIではありません**。予告なく変更される可能性があります。調査の詳細、この方式を採用した理由、既知のリスク（レート制限・形式変更・Keychainアクセスの挙動）については[docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)を参照してください。
 
