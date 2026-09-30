@@ -51,6 +51,15 @@ final class ClaudeUsageProviderTests: XCTestCase {
         XCTAssertEqual(ClaudeUsageProvider.parseMeter(hundred)?.percentUsed, 100)
     }
 
+    func testParseMeterRejectsBoolUtilization() {
+        // Decoded through JSONSerialization so `true` is the CFBoolean-backed
+        // NSNumber the real response yields (which `as? Double` would accept).
+        let body = Data(#"{"utilization":true,"resets_at":"2026-09-26T02:19:59+00:00"}"#.utf8)
+        let dict = try? JSONSerialization.jsonObject(with: body) as? [String: Any]
+        XCTAssertNotNil(dict)
+        XCTAssertNil(ClaudeUsageProvider.parseMeter(dict))
+    }
+
     func testParseMeterRejectsNaN() {
         let dict: [String: Any] = ["utilization": Double.nan, "resets_at": "2026-09-26T02:19:59+00:00"]
         XCTAssertNil(ClaudeUsageProvider.parseMeter(dict))
@@ -133,6 +142,18 @@ final class ClaudeUsageProviderTests: XCTestCase {
             if case .invalidResponse = $0 { return true }
             return false
         }
+    }
+
+    func testParseResponseBoolUtilizationIsInvalidResponse() {
+        let body = Data(#"""
+        {"five_hour":{"utilization":true,"resets_at":"2026-09-26T02:19:59+00:00"},
+         "seven_day":{"utilization":42.0,"resets_at":"2026-09-30T00:00:00+00:00"}}
+        """#.utf8)
+        assertThrows(statusCode: 200, body: body) {
+            if case .invalidResponse = $0 { return true }
+            return false
+        }
+        XCTAssertTrue(ClaudeUsageProvider.meterFieldTypes(of: body).hasPrefix("five_hour{utilization:bool,"))
     }
 
     // MARK: - keyStructure

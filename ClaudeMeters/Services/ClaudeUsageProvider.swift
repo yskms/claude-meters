@@ -142,14 +142,12 @@ final class ClaudeUsageProvider: UsageProvider {
         }.joined(separator: " ")
     }
 
-    /// JSONSerialization bridges `true`/`false` to NSNumber too, so booleans
-    /// are told apart by CF type ID.
     private static func jsonTypeName(_ value: Any?) -> String {
         switch value {
         case nil: return "missing"
         case is NSNull: return "null"
         case let number as NSNumber:
-            return CFGetTypeID(number) == CFBooleanGetTypeID() ? "bool" : "number"
+            return Self.isJSONBool(number) ? "bool" : "number"
         case is String: return "string"
         case is [String: Any]: return "object"
         case is [Any]: return "array"
@@ -259,8 +257,16 @@ final class ClaudeUsageProvider: UsageProvider {
         return .success(output)
     }
 
+    /// JSONSerialization bridges `true`/`false` to NSNumber, which `as? Double`
+    /// accepts (as 1.0/0.0), so booleans must be told apart by CF type ID.
+    static func isJSONBool(_ value: Any?) -> Bool {
+        guard let number = value as? NSNumber else { return false }
+        return CFGetTypeID(number) == CFBooleanGetTypeID()
+    }
+
     static func parseMeter(_ dict: [String: Any]?) -> MeterUsage? {
         guard let dict,
+              !Self.isJSONBool(dict["utilization"]),
               let utilization = dict["utilization"] as? Double,
               let resetsAtString = dict["resets_at"] as? String,
               let resetsAt = Self.parseDate(resetsAtString) else {
