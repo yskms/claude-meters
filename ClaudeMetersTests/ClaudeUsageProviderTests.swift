@@ -150,9 +150,24 @@ final class ClaudeUsageProviderTests: XCTestCase {
 
     // MARK: - errorSummary
 
-    func testErrorSummaryExtractsKnownFields() {
-        let body = Data(#"{"error":{"type":"rate_limit_error","message":"Rate limited.","extra":"x"}}"#.utf8)
-        XCTAssertEqual(ClaudeUsageProvider.errorSummary(of: body), "type=rate_limit_error message=Rate limited.")
+    func testErrorSummaryLogsTypeButNeverMessage() {
+        let body = Data(#"{"error":{"type":"rate_limit_error","message":"secret user@example.com","extra":"x"}}"#.utf8)
+        let summary = ClaudeUsageProvider.errorSummary(of: body)
+        XCTAssertEqual(summary, "type=rate_limit_error bytes=\(body.count)")
+        XCTAssertFalse(summary.contains("secret"))
+    }
+
+    func testErrorSummaryRejectsFreeFormType() {
+        let body = Data(#"{"error":{"type":"see https://example.com/?token=abc"}}"#.utf8)
+        XCTAssertEqual(ClaudeUsageProvider.errorSummary(of: body), "type=<unrecognized> bytes=\(body.count)")
+    }
+
+    func testSanitizedRetryAfter() {
+        XCTAssertEqual(ClaudeUsageProvider.sanitizedRetryAfter(nil), "-")
+        XCTAssertEqual(ClaudeUsageProvider.sanitizedRetryAfter("0"), "0")
+        XCTAssertEqual(ClaudeUsageProvider.sanitizedRetryAfter("120"), "120")
+        XCTAssertEqual(ClaudeUsageProvider.sanitizedRetryAfter("Wed, 30 Sep 2026 07:00:00 GMT"), "<non-numeric>")
+        XCTAssertEqual(ClaudeUsageProvider.sanitizedRetryAfter("-1"), "<non-numeric>")
     }
 
     func testErrorSummaryOmitsNonErrorBody() {

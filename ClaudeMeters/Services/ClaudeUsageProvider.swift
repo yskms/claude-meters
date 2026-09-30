@@ -76,26 +76,36 @@ final class ClaudeUsageProvider: UsageProvider {
         return UsageSnapshot(session: session, weekly: weekly, fetchedAt: fetchedAt)
     }
 
-    /// Logs only known diagnostic fields, never the raw body: this endpoint is
-    /// undocumented, so a proxy/auth/server failure could return a body of
-    /// any shape.
+    /// Logs only enumerable diagnostics, never free-form server text (body,
+    /// error message, arbitrary headers): this endpoint is undocumented, so a
+    /// proxy/auth/server failure could put anything in them, and these logs
+    /// are public and persisted.
     private static func logHTTPFailure(status: Int, http: HTTPURLResponse, data: Data) {
-        let retryAfter = http.value(forHTTPHeaderField: "Retry-After") ?? "-"
-        let requestID = http.value(forHTTPHeaderField: "request-id") ?? "-"
+        let retryAfter = Self.sanitizedRetryAfter(http.value(forHTTPHeaderField: "Retry-After"))
         let summary = Self.errorSummary(of: data)
-        logger.error("Usage fetch failed: status=\(status, privacy: .public) retry-after=\(retryAfter, privacy: .public) request-id=\(requestID, privacy: .public) \(summary, privacy: .public)")
+        logger.error("Usage fetch failed: status=\(status, privacy: .public) retry-after=\(retryAfter, privacy: .public) \(summary, privacy: .public)")
     }
 
-    /// e.g. `type=rate_limit_error message=Rate limited. …`, or just the body
-    /// length when it isn't an Anthropic-style `{"error": {...}}` object.
+    /// Delay-seconds form only; anything else (HTTP-date, garbage) is not echoed.
+    static func sanitizedRetryAfter(_ value: String?) -> String {
+        guard let value else { return "-" }
+        return value.range(of: #"^[0-9]{1,9}$"#, options: .regularExpression) != nil ? value : "<non-numeric>"
+    }
+
+    /// e.g. `type=rate_limit_error bytes=94`. The type is echoed only when it
+    /// looks like an Anthropic error-type identifier; `message` is never logged.
     static func errorSummary(of data: Data) -> String {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let error = json["error"] as? [String: Any] else {
             return "body=<\(data.count) bytes, not an API error object>"
         }
-        let type = error["type"] as? String ?? "-"
-        let message = (error["message"] as? String).map { String($0.prefix(200)) } ?? "-"
-        return "type=\(type) message=\(message)"
+        let type: String
+        if let raw = error["type"] as? String {
+            type = raw.range(of: #"^[a-z_]{1,64}$"#, options: .regularExpression) != nil ? raw : "<unrecognized>"
+        } else {
+            type = "-"
+        }
+        return "type=\(type) bytes=\(data.count)"
     }
 
     /// 2xx with an unexpected shape: the body is (part of) a real usage
