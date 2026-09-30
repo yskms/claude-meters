@@ -29,6 +29,14 @@ final class ClaudeUsageProviderTests: XCTestCase {
         XCTAssertNil(ClaudeUsageProvider.parseMeter(dict))
     }
 
+    func testParseMeterNullResetsAtMeansNoRunningWindow() {
+        let dict: [String: Any] = ["utilization": 0.0, "resets_at": NSNull()]
+        let meter = ClaudeUsageProvider.parseMeter(dict)
+        XCTAssertEqual(meter?.percentUsed, 0)
+        XCTAssertNotNil(meter)
+        XCTAssertNil(meter?.resetsAt)
+    }
+
     func testParseMeterMalformedResetsAt() {
         let dict: [String: Any] = ["utilization": 16.0, "resets_at": "not a date"]
         XCTAssertNil(ClaudeUsageProvider.parseMeter(dict))
@@ -142,6 +150,19 @@ final class ClaudeUsageProviderTests: XCTestCase {
             if case .invalidResponse = $0 { return true }
             return false
         }
+    }
+
+    /// The shape observed on 2026-10-01 while no 5-hour window was running.
+    func testParseResponseAcceptsNullSessionResetsAt() throws {
+        let body = Data(#"""
+        {"five_hour":{"utilization":0.0,"resets_at":null},
+         "seven_day":{"utilization":42.0,"resets_at":"2026-09-30T00:00:00+00:00"}}
+        """#.utf8)
+        let snapshot = try ClaudeUsageProvider.parseResponse(statusCode: 200, data: body, fetchedAt: Date())
+        XCTAssertEqual(snapshot.session.percentUsed, 0)
+        XCTAssertNil(snapshot.session.resetsAt)
+        XCTAssertEqual(snapshot.weekly.percentUsed, 42)
+        XCTAssertNotNil(snapshot.weekly.resetsAt)
     }
 
     func testParseResponseBoolUtilizationIsInvalidResponse() {

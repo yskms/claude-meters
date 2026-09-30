@@ -36,6 +36,17 @@ final class UsageDisplayStateTests: XCTestCase {
         XCTAssertNil(s.staleSince)
     }
 
+    func testMeterWithoutResetTimeIsNeverHiddenByReset() {
+        let noWindow = UsageSnapshot(
+            session: MeterUsage(percentUsed: 0, resetsAt: nil),
+            weekly: MeterUsage(percentUsed: 42, resetsAt: fetchedAt.addingTimeInterval(60)),
+            fetchedAt: fetchedAt
+        )
+        let s = UsageDisplayState.make(snapshot: noWindow, lastError: nil, now: fetchedAt.addingTimeInterval(120))
+        XCTAssertEqual(s.session, noWindow.session)
+        XCTAssertNil(s.weekly)
+    }
+
     // MARK: - Transient failure
 
     func testTransientFailureKeepsValuesAndMarksStale() {

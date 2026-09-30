@@ -267,9 +267,19 @@ final class ClaudeUsageProvider: UsageProvider {
     static func parseMeter(_ dict: [String: Any]?) -> MeterUsage? {
         guard let dict,
               !Self.isJSONBool(dict["utilization"]),
-              let utilization = dict["utilization"] as? Double,
-              let resetsAtString = dict["resets_at"] as? String,
-              let resetsAt = Self.parseDate(resetsAtString) else {
+              let utilization = dict["utilization"] as? Double else {
+            return nil
+        }
+        // `null` means no window is running (see MeterUsage.resetsAt); a
+        // missing key or an unparsable string is still a shape change.
+        let resetsAt: Date?
+        switch dict["resets_at"] {
+        case is NSNull:
+            resetsAt = nil
+        case let string as String:
+            guard let date = Self.parseDate(string) else { return nil }
+            resetsAt = date
+        default:
             return nil
         }
         guard utilization.isFinite, (0.0...100.0).contains(utilization) else { return nil }

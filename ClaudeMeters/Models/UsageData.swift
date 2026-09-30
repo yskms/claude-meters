@@ -2,7 +2,10 @@ import Foundation
 
 struct MeterUsage: Equatable {
     let percentUsed: Int
-    let resetsAt: Date
+    /// nil when the API returns `resets_at: null`, observed for `five_hour`
+    /// while no 5-hour window is running (e.g. overnight with no usage).
+    /// There is then no reset to count down to, not a missing value.
+    let resetsAt: Date?
 }
 
 struct UsageSnapshot: Equatable {
@@ -43,13 +46,19 @@ struct UsageDisplayState: Equatable {
         }
         // Checked per meter: a session reset must not hide a still-valid
         // weekly value (and vice versa).
-        let session = now < snapshot.session.resetsAt ? snapshot.session : nil
-        let weekly = now < snapshot.weekly.resetsAt ? snapshot.weekly : nil
+        let session = Self.isBeforeReset(snapshot.session, now: now) ? snapshot.session : nil
+        let weekly = Self.isBeforeReset(snapshot.weekly, now: now) ? snapshot.weekly : nil
         let showsAny = session != nil || weekly != nil
         return UsageDisplayState(
             session: session,
             weekly: weekly,
             staleSince: lastError != nil && showsAny ? snapshot.fetchedAt : nil
         )
+    }
+
+    /// A meter with no running window has no reset to pass, so it stays shown.
+    private static func isBeforeReset(_ meter: MeterUsage, now: Date) -> Bool {
+        guard let resetsAt = meter.resetsAt else { return true }
+        return now < resetsAt
     }
 }
