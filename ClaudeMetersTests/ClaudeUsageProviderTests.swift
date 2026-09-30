@@ -31,10 +31,15 @@ final class ClaudeUsageProviderTests: XCTestCase {
 
     func testParseMeterNullResetsAtMeansNoRunningWindow() {
         let dict: [String: Any] = ["utilization": 0.0, "resets_at": NSNull()]
-        let meter = ClaudeUsageProvider.parseMeter(dict)
+        let meter = ClaudeUsageProvider.parseMeter(dict, allowsNullResetsAt: true)
         XCTAssertEqual(meter?.percentUsed, 0)
         XCTAssertNotNil(meter)
         XCTAssertNil(meter?.resetsAt)
+    }
+
+    func testParseMeterRejectsNullResetsAtUnlessAllowed() {
+        let dict: [String: Any] = ["utilization": 0.0, "resets_at": NSNull()]
+        XCTAssertNil(ClaudeUsageProvider.parseMeter(dict))
     }
 
     func testParseMeterMalformedResetsAt() {
@@ -163,6 +168,19 @@ final class ClaudeUsageProviderTests: XCTestCase {
         XCTAssertNil(snapshot.session.resetsAt)
         XCTAssertEqual(snapshot.weekly.percentUsed, 42)
         XCTAssertNotNil(snapshot.weekly.resetsAt)
+    }
+
+    /// Only `five_hour` has been observed with a null reset; a null weekly
+    /// reset must still surface as a shape change.
+    func testParseResponseNullWeeklyResetsAtIsInvalidResponse() {
+        let body = Data(#"""
+        {"five_hour":{"utilization":16.0,"resets_at":"2026-09-26T02:19:59+00:00"},
+         "seven_day":{"utilization":42.0,"resets_at":null}}
+        """#.utf8)
+        assertThrows(statusCode: 200, body: body) {
+            if case .invalidResponse = $0 { return true }
+            return false
+        }
     }
 
     func testParseResponseBoolUtilizationIsInvalidResponse() {

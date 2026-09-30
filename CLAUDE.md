@@ -13,7 +13,7 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 - statusLine経由にしなかった理由：VS Code拡張版Claude Codeは`statusLine`フック自体を未サポート（ターミナル版のみ対応）。ターミナル版でも`rate_limits`が入らないバグが報告されている。詳細はREQUIREMENTS.mdの「開発前提・技術検証」参照
 - `resets_at`（リセット日時）はAPIが返す値をそのまま使う。固定曜日かローリング7日かをアプリ側で計算・推測しない
 - Keychainの値は`{"claudeAiOauth":{"accessToken": ...}}`というJSON構造。生の文字列をそのままBearerトークンにはできない
-- `ClaudeUsageProvider.parseMeter`は`utilization`と`resets_at`の両方が揃わない限り`nil`を返し、呼び出し元は`fetchUsage()`全体を失敗させる。未ドキュメントAPIの形式変更を「取得成功だが値が空」ではなく明確な失敗として検知するための意図的な設計。唯一の例外は`resets_at: null`で、5時間枠が始まっていない間（夜間の未使用時など）に実際に返る正常な値のため受け付け、`MeterUsage.resetsAt = nil`（リセットによる非表示の対象外）にする。キー欠落・日時として読めない文字列まで許容しないこと
+- `ClaudeUsageProvider.parseMeter`は`utilization`と`resets_at`の両方が揃わない限り`nil`を返し、呼び出し元は`fetchUsage()`全体を失敗させる。未ドキュメントAPIの形式変更を「取得成功だが値が空」ではなく明確な失敗として検知するための意図的な設計。唯一の例外は`five_hour`の`resets_at: null`で、5時間枠が始まっていない間（夜間の未使用時など）に実際に返る正常な値のため受け付け、`MeterUsage.resetsAt = nil`（リセットによる非表示の対象外）にする。`seven_day`の`null`（意味が未確認）、キー欠落、日時として読めない文字列まで許容しないこと
 - Keychainは`SecItemCopyMatching`ではなく`/usr/bin/security find-generic-password -w`をサブプロセスで実行して読む。Claude Codeはトークン更新のたびに`security add-generic-password -U`で項目を上書きしており（作成日時は変わらず更新日時だけが変わることを確認）、そのときACLが`/usr/bin/security`のみを信頼する状態に戻るため、直接読むと「常に許可」が1日数回リセットされてパスワードダイアログが再表示される、と考えられる（ACLの中身は未確認）。`security`経由ならトークン更新をまたいでもダイアログが再表示されないことを2026-09-30に実機で確認済み。直接呼び出しに戻さないこと
 - `security`プロセスには60秒のタイムアウトを設けている（`security`自身がロック解除等のダイアログを出した場合にパスワード入力が間に合う長さ）。また、失敗時に`SecItemCopyMatching`へフォールバックしない。いずれも、`Task.cancel()`で止められない同期処理が無期限に止まると`UsageViewModel`の更新ループ全体が止まるため（下記参照）。キーチェーンのロックや`security`がACLに無い場合は、CLIが失敗せずダイアログを出すので、フォールバックしても得られるものはほぼ無い
 

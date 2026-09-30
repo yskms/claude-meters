@@ -68,7 +68,9 @@ final class ClaudeUsageProvider: UsageProvider {
         // This endpoint is undocumented (see docs/REQUIREMENTS.md). If its
         // shape changes and a required field goes missing, that must surface
         // as a fetch failure, not as a silent "0%"/"–" display.
-        guard let session = Self.parseMeter(json["five_hour"] as? [String: Any]),
+        // `resets_at: null` is allowed only where it was observed and
+        // understood (see parseMeter); elsewhere it is still a shape change.
+        guard let session = Self.parseMeter(json["five_hour"] as? [String: Any], allowsNullResetsAt: true),
               let weekly = Self.parseMeter(json["seven_day"] as? [String: Any]) else {
             throw UsageProviderError.invalidResponse
         }
@@ -264,17 +266,19 @@ final class ClaudeUsageProvider: UsageProvider {
         return CFGetTypeID(number) == CFBooleanGetTypeID()
     }
 
-    static func parseMeter(_ dict: [String: Any]?) -> MeterUsage? {
+    /// `allowsNullResetsAt`: `five_hour` returns `resets_at: null` while no
+    /// 5-hour window is running (observed 2026-10-01). What a null would mean
+    /// for `seven_day` is unknown, so there it stays a failure.
+    static func parseMeter(_ dict: [String: Any]?, allowsNullResetsAt: Bool = false) -> MeterUsage? {
         guard let dict,
               !Self.isJSONBool(dict["utilization"]),
               let utilization = dict["utilization"] as? Double else {
             return nil
         }
-        // `null` means no window is running (see MeterUsage.resetsAt); a
-        // missing key or an unparsable string is still a shape change.
+        // A missing key or an unparsable string is always a shape change.
         let resetsAt: Date?
         switch dict["resets_at"] {
-        case is NSNull:
+        case is NSNull where allowsNullResetsAt:
             resetsAt = nil
         case let string as String:
             guard let date = Self.parseDate(string) else { return nil }

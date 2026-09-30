@@ -489,10 +489,10 @@ Popover：
   （`fields=five_hour{utilization:number,resets_at:null} ...`のような形式、値は出さない）
   を出すようにした。2026-10-01にこのログで、`five_hour.resets_at`が`null`
   （`utilization`は数値）であることを確認した（06:59〜07:41に継続）。5時間枠が
-  始まっていない間の正常な状態と判断し、`resets_at: null`は受け付けて、そのメーターは
+  始まっていない間の正常な状態と判断し、`five_hour`の`resets_at: null`は受け付けて、そのメーターは
   リセットによる「–」化の対象外にする（Popoverのリセット時刻表示は省略）。
-  `utilization`はAPIの値をそのまま使う。キー欠落や日時として読めない文字列は
-  引き続き形式エラーとする
+  `utilization`はAPIの値をそのまま使う。`seven_day`の`null`は意味を確認できて
+  いないため、キー欠落や日時として読めない文字列と同じく引き続き形式エラーとする
 
 ---
 
