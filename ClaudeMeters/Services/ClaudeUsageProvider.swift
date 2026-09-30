@@ -112,7 +112,49 @@ final class ClaudeUsageProvider: UsageProvider {
     /// payload, so only its key structure is logged, never the values.
     private static func logShapeFailure(_ error: Error, data: Data) {
         let keys = Self.keyStructure(of: data)
-        logger.error("Usage fetch failed: \(String(describing: error), privacy: .public) keys=\(keys, privacy: .public)")
+        let fields = Self.meterFieldTypes(of: data)
+        logger.error("Usage fetch failed: \(String(describing: error), privacy: .public) fields=\(fields, privacy: .public) keys=\(keys, privacy: .public)")
+    }
+
+    /// Which `parseMeter` check rejected the payload, without logging values:
+    /// e.g. `five_hour{utilization:number,resets_at:null} seven_day{...}`.
+    /// Each label maps to one rejection reason in `parseMeter`.
+    static func meterFieldTypes(of data: Data) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return "<not a JSON object>"
+        }
+        return ["five_hour", "seven_day"].map { key in
+            guard let meter = json[key] as? [String: Any] else {
+                return "\(key):\(Self.jsonTypeName(json[key]))"
+            }
+            let utilization = meter["utilization"]
+            var utilizationLabel = Self.jsonTypeName(utilization)
+            if utilizationLabel == "number", let value = utilization as? Double,
+               !(value.isFinite && (0.0...100.0).contains(value)) {
+                utilizationLabel = "number(out-of-range)"
+            }
+            let resetsAt = meter["resets_at"]
+            var resetsAtLabel = Self.jsonTypeName(resetsAt)
+            if let string = resetsAt as? String, Self.parseDate(string) == nil {
+                resetsAtLabel = "string(unparsable)"
+            }
+            return "\(key){utilization:\(utilizationLabel),resets_at:\(resetsAtLabel)}"
+        }.joined(separator: " ")
+    }
+
+    /// JSONSerialization bridges `true`/`false` to NSNumber too, so booleans
+    /// are told apart by CF type ID.
+    private static func jsonTypeName(_ value: Any?) -> String {
+        switch value {
+        case nil: return "missing"
+        case is NSNull: return "null"
+        case let number as NSNumber:
+            return CFGetTypeID(number) == CFBooleanGetTypeID() ? "bool" : "number"
+        case is String: return "string"
+        case is [String: Any]: return "object"
+        case is [Any]: return "array"
+        default: return "other"
+        }
     }
 
     /// e.g. `five_hour{resets_at,utilization} seven_day{...}`, or

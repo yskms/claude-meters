@@ -148,6 +148,34 @@ final class ClaudeUsageProviderTests: XCTestCase {
         XCTAssertEqual(ClaudeUsageProvider.keyStructure(of: Data("[1,2]".utf8)), "<not a JSON object>")
     }
 
+    // MARK: - meterFieldTypes
+
+    func testMeterFieldTypesValidBodyDropsValues() {
+        let types = ClaudeUsageProvider.meterFieldTypes(of: validBody)
+        XCTAssertEqual(types, "five_hour{utilization:number,resets_at:string} seven_day{utilization:number,resets_at:string}")
+    }
+
+    func testMeterFieldTypesLabelsEachRejectionReason() {
+        let body = Data(#"""
+        {"five_hour":{"utilization":150,"resets_at":null},
+         "seven_day":{"utilization":true,"resets_at":"garbage 2026"}}
+        """#.utf8)
+        let types = ClaudeUsageProvider.meterFieldTypes(of: body)
+        XCTAssertEqual(types, "five_hour{utilization:number(out-of-range),resets_at:null} seven_day{utilization:bool,resets_at:string(unparsable)}")
+        XCTAssertFalse(types.contains("150"))
+        XCTAssertFalse(types.contains("garbage"))
+    }
+
+    func testMeterFieldTypesMissingOrNonObjectMeter() {
+        let body = Data(#"{"five_hour":null,"seven_day":{"utilization":"16"}}"#.utf8)
+        XCTAssertEqual(
+            ClaudeUsageProvider.meterFieldTypes(of: body),
+            "five_hour:null seven_day{utilization:string,resets_at:missing}"
+        )
+        XCTAssertEqual(ClaudeUsageProvider.meterFieldTypes(of: Data("{}".utf8)), "five_hour:missing seven_day:missing")
+        XCTAssertEqual(ClaudeUsageProvider.meterFieldTypes(of: Data("[1]".utf8)), "<not a JSON object>")
+    }
+
     // MARK: - errorSummary
 
     func testErrorSummaryLogsTypeButNeverMessage() {
