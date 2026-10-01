@@ -19,6 +19,15 @@ if [ ! -d "$EXPORT_APP" ]; then
   exit 1
 fi
 
+# 設定画面の「更新を確認」は、.appに埋め込まれたバージョンとGitHub Releasesの
+# 最新タグを比較する。DMGのファイル名（引数）と食い違ったまま公開すると、
+# 最新版を入れた人にも「更新あり」と出続けるため、ここで止める。
+APP_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$EXPORT_APP/Contents/Info.plist")"
+if [ "$APP_VERSION" != "$VERSION" ]; then
+  echo "エラー: .appのバージョン($APP_VERSION)が引数のバージョン($VERSION)と一致しません。project.ymlのMARKETING_VERSIONを更新し、xcodegen generate → archive からやり直してください。" >&2
+  exit 1
+fi
+
 if ! command -v create-dmg >/dev/null 2>&1; then
   echo "エラー: create-dmg が見つかりません。'brew install create-dmg' を実行してください。" >&2
   exit 1

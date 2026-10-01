@@ -17,8 +17,21 @@ final class SettingsWindowController {
     private var windowController: NSWindowController?
     private var hostingController: NSHostingController<SettingsView>?
     private var languageObserver: AnyCancellable?
+    private var updateStateObserver: AnyCancellable?
+    private let updateChecker = UpdateChecker()
 
-    private init() {}
+    private init() {
+        // The update-check result changes the row's content (and so the
+        // window's fitting size) after the user clicks. Same one-runloop
+        // wait as the language observer in show(): `$state` also notifies
+        // before the value is applied.
+        updateStateObserver = updateChecker.$state
+            .sink { [weak self] _ in
+                DispatchQueue.main.async {
+                    self?.resizeToFitContent()
+                }
+            }
+    }
 
     func show(viewModel: UsageViewModel) {
         // The "設定" button lives inside the MenuBarExtra popover, which is
@@ -35,6 +48,8 @@ final class SettingsWindowController {
             popoverWindow.close()
         }
 
+        updateChecker.resetIfFinished()
+
         if windowController == nil {
             // NSWindow(contentViewController:) sizes the window to the
             // hosted SwiftUI content's fitting size before we call
@@ -42,7 +57,7 @@ final class SettingsWindowController {
             // contentView afterwards leaves center() centering a 0x0
             // rect, so the window ends up with its top-left corner (not
             // its center) at the screen's center once it grows to fit.
-            let hostingController = NSHostingController(rootView: SettingsView(viewModel: viewModel))
+            let hostingController = NSHostingController(rootView: SettingsView(viewModel: viewModel, updateChecker: updateChecker))
             self.hostingController = hostingController
             let window = NSWindow(contentViewController: hostingController)
             window.styleMask = [.titled, .closable]
@@ -86,10 +101,9 @@ final class SettingsWindowController {
     }
 
     // setContentSize keeps frame.origin — the window's bottom-left corner —
-    // fixed and grows toward the top-right (unintuitively: it's the title
-    // bar that would move if height ever changed, not the bottom edge).
-    // Only width changes today, so that doesn't bite yet, but it's why any
-    // future height change here can't assume the title bar stays put.
+    // fixed, so a height change would move the title bar instead of the
+    // bottom edge. The top edge is restored below so the title bar stays
+    // put and a taller window grows downward.
     //
     // Called before the popover-alignment step in show() touches origin.x,
     // and re-clamps to the screen itself: the menu bar (and this window) sit
@@ -99,7 +113,9 @@ final class SettingsWindowController {
     // here so neither can skip the clamp.
     private func resizeToFitContent() {
         guard let window = windowController?.window, let hostingController else { return }
+        let topEdge = window.frame.maxY
         window.setContentSize(hostingController.view.fittingSize)
+        window.setFrameOrigin(NSPoint(x: window.frame.origin.x, y: topEdge - window.frame.height))
         clampToVisibleFrame(window)
     }
 
@@ -107,6 +123,7 @@ final class SettingsWindowController {
         guard let visibleFrame = (window.screen ?? NSScreen.main)?.visibleFrame else { return }
         var origin = window.frame.origin
         origin.x = min(max(origin.x, visibleFrame.minX), visibleFrame.maxX - window.frame.width)
+        origin.y = min(max(origin.y, visibleFrame.minY), visibleFrame.maxY - window.frame.height)
         window.setFrameOrigin(origin)
     }
 }

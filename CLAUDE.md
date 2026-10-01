@@ -53,6 +53,16 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 - 日付・相対時刻など`Locale`を扱うAPI（`RelativeDateTimeFormatter`、`Date.FormatStyle`等）は`LocalizationManager.shared.locale`（言語だけ差し替え、地域コードは引き継いだLocale、システム追従時は`nil`）を明示的に渡すこと。渡さないと`Locale.current`（システム言語）で書式化される。ただし引き継がれるのは地域コードの既定値のみで、「24時間表示」のようにシステム環境設定で個別に上書きした項目までは反映されない
 - `LocalizationManager.$language`をCombineで購読するときは、クロージャが受け取った新しい値を使うこと。`@Published`は値が実際に書き換わる前（`willSet`）に新しい値を流すため、購読先で`LocalizationManager.shared.language`を読み直すと1回古い値を参照してしまう（`string(_:for:)`に新しい値を渡すこと）
 
+## バージョン番号と「更新を確認」
+
+設定画面の「更新を確認」（`UpdateChecker`）は、.appのバージョンとGitHub Releasesの最新タグを数値で比較する。
+
+- バージョンの唯一の正は`project.yml`の`MARKETING_VERSION`（`CFBundleShortVersionString`になる）。リリース時にそのバージョンへ更新し、`xcodegen generate`してからarchiveする。`Distribution/build-dmg.sh <version>`は.appのバージョンと引数が違うと失敗する。ここが食い違ったまま公開すると、最新版を入れた人にも「更新あり」と出続ける。v0.1.7以前は`0.1`固定のまま配布されており、この仕組みはv0.1.8以降
+- 採番は0.1.9の次を0.2.0とする（0.1.10にはしない）
+- タグは`v`＋数値のドット区切り（`v0.1.8`）のみ。`-beta`のようなサフィックスは形式エラー（更新確認の失敗）として扱う。`AppVersion`は`0.1`と`0.1.0`を同一視する
+- 「ダウンロード」ボタンはAPIレスポンスのURLではなく固定URL（`UpdateChecker.releasesPageURL`）を開く。通知のみで、自動ダウンロード・インストールはしない
+- 結果の文言幅で設定ウィンドウの幅が変わるため、`SettingsWindowController`が`UpdateChecker.state`の変化でも`resizeToFitContent()`を呼んでいる。言語切替の購読と同様、`$state`は反映前に通知されるので1 runloop待ってから測っている
+
 ## App Sandboxはv1では無効（意図的）
 
 Claude CodeのKeychain項目への他アプリからのアクセスと非互換になる可能性が高いため。Mac App Store配布はv1対象外。

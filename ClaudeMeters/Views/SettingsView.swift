@@ -3,6 +3,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @ObservedObject var viewModel: UsageViewModel
+    @ObservedObject var updateChecker: UpdateChecker
     @ObservedObject private var l10n = LocalizationManager.shared
     @AppStorage("launchAtLogin") private var launchAtLogin = false
 
@@ -38,6 +39,19 @@ struct SettingsView: View {
                 Text("Português (Brasil)").tag(AppLanguage.ptBR)
                 Text("Español").tag(AppLanguage.es)
             }
+
+            // The result text and the button swap in place rather than
+            // appearing on a new line; the window re-fits its content when
+            // `updateChecker.state` changes (see SettingsWindowController).
+            LabeledContent(String(format: l10n.string("settings.version"), updateChecker.currentVersion)) {
+                HStack {
+                    if let status = updateStatusText {
+                        Text(status)
+                            .foregroundColor(.secondary)
+                    }
+                    updateButton
+                }
+            }
         }
         .padding()
         // A fixed width clipped longer translations (Italian/Portuguese/
@@ -47,6 +61,36 @@ struct SettingsView: View {
         // SettingsWindowController) grow for longer ones.
         .frame(minWidth: 320)
         .environment(\.locale, l10n.locale ?? .current)
+    }
+
+    private var updateStatusText: String? {
+        switch updateChecker.state {
+        case .idle:
+            return nil
+        case .checking:
+            return l10n.string("update.checking")
+        case .upToDate:
+            return l10n.string("update.up_to_date")
+        case .updateAvailable(let version):
+            return String(format: l10n.string("update.available"), version)
+        case .failed:
+            return l10n.string("update.failed")
+        }
+    }
+
+    @ViewBuilder
+    private var updateButton: some View {
+        if case .updateAvailable = updateChecker.state {
+            // Opens the Releases page; installing stays a manual DMG download.
+            Button(l10n.string("update.download")) {
+                NSWorkspace.shared.open(UpdateChecker.releasesPageURL)
+            }
+        } else {
+            Button(l10n.string("settings.check_for_updates")) {
+                Task { await updateChecker.check() }
+            }
+            .disabled(updateChecker.state == .checking)
+        }
     }
 
     private func updateLaunchAtLogin(_ enabled: Bool) {
