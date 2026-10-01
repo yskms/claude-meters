@@ -45,13 +45,15 @@ final class UsageViewModel: ObservableObject {
 
     init(provider: UsageProvider = ClaudeUsageProvider()) {
         self.provider = provider
-        let saved = UserDefaults.standard.double(forKey: Self.refreshIntervalDefaultsKey)
+        let defaults = UserDefaults.standard
+        let isSaved = defaults.object(forKey: Self.refreshIntervalDefaultsKey) != nil
+        let saved = defaults.double(forKey: Self.refreshIntervalDefaultsKey)
         let interval = Self.normalizedRefreshInterval(saved)
         self.refreshInterval = interval
-        // Rewrite a saved value the picker can't show (e.g. the old 60 s), so
-        // the stored setting matches what's running. Not saved at all stays
-        // unsaved, so it follows any future change of the default.
-        if saved > 0, saved != interval {
+        // Rewrite any saved value the picker can't show (the old 60 s, 0,
+        // negatives, ...), so the stored setting matches what's running. Not
+        // saved at all stays unsaved, so it follows any future default change.
+        if isSaved, saved != interval {
             UserDefaults.standard.set(interval, forKey: Self.refreshIntervalDefaultsKey)
         }
         restartLoop()
@@ -117,7 +119,7 @@ final class UsageViewModel: ObservableObject {
 
     /// Unsaved (0), the retired 60 s, or any other value outside the
     /// picker's options falls back to the default.
-    nonisolated static func normalizedRefreshInterval(_ saved: TimeInterval) -> TimeInterval {
+    static func normalizedRefreshInterval(_ saved: TimeInterval) -> TimeInterval {
         allowedRefreshIntervals.contains(saved) ? saved : defaultRefreshInterval
     }
 

@@ -109,6 +109,16 @@ final class UsageViewModelTests: XCTestCase {
         XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 120)
     }
 
+    func testSavedInvalidIntervalsAreRewrittenToTwoMinutes() {
+        for invalid in [0.0, -1.0, 30.0, 600.0] {
+            UserDefaults.standard.set(invalid, forKey: "refreshInterval")
+            let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+
+            XCTAssertEqual(viewModel.refreshInterval, 120, "saved \(invalid)")
+            XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 120, "saved \(invalid)")
+        }
+    }
+
     func testSavedFiveMinuteIntervalIsKept() {
         UserDefaults.standard.set(300.0, forKey: "refreshInterval")
         let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
