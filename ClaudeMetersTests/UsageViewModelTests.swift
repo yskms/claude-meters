@@ -94,6 +94,40 @@ final class UsageViewModelTests: XCTestCase {
         XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 300)
     }
 
+    func testUnsavedRefreshIntervalDefaultsToTwoMinutesWithoutSaving() {
+        let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+
+        XCTAssertEqual(viewModel.refreshInterval, 120)
+        XCTAssertNil(UserDefaults.standard.object(forKey: "refreshInterval"))
+    }
+
+    func testSavedOneMinuteIntervalMigratesToTwoMinutes() {
+        UserDefaults.standard.set(60.0, forKey: "refreshInterval")
+        let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+
+        XCTAssertEqual(viewModel.refreshInterval, 120)
+        XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 120)
+    }
+
+    func testSavedFiveMinuteIntervalIsKept() {
+        UserDefaults.standard.set(300.0, forKey: "refreshInterval")
+        let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+
+        XCTAssertEqual(viewModel.refreshInterval, 300)
+        XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 300)
+    }
+
+    func testNormalizedRefreshInterval() {
+        XCTAssertEqual(UsageViewModel.normalizedRefreshInterval(0), 120)
+        XCTAssertEqual(UsageViewModel.normalizedRefreshInterval(60), 120)
+        XCTAssertEqual(UsageViewModel.normalizedRefreshInterval(120), 120)
+        XCTAssertEqual(UsageViewModel.normalizedRefreshInterval(300), 300)
+        // Values the picker never offered (hand-edited defaults, etc.).
+        XCTAssertEqual(UsageViewModel.normalizedRefreshInterval(30), 120)
+        XCTAssertEqual(UsageViewModel.normalizedRefreshInterval(600), 120)
+        XCTAssertEqual(UsageViewModel.normalizedRefreshInterval(-1), 120)
+    }
+
     /// Polls a condition on the main actor instead of a fixed sleep, so the
     /// test finishes as soon as the async fetch lands rather than always
     /// waiting out a worst-case delay.

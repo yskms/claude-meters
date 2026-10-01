@@ -18,8 +18,9 @@ enum UsageProviderError: Error {
     case network(Error)
 
     /// Likely to clear up on its own, so the last good values may stay on
-    /// screen (see UsageDisplayState). The endpoint returns 429 readily even
-    /// at a 1-minute interval. Everything else needs the user's attention or
+    /// screen (see UsageDisplayState). The endpoint returns 429 when polled
+    /// faster than about once per 2 minutes (seen at a 1-minute interval).
+    /// Everything else needs the user's attention or
     /// signals an API change, and must show as "–".
     var isTransient: Bool {
         switch self {

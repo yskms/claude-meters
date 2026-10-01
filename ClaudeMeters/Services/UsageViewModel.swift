@@ -35,13 +35,25 @@ final class UsageViewModel: ObservableObject {
     /// overwriting consecutiveFailures/lastError/snapshot.
     private var currentGeneration = 0
 
-    private static let refreshIntervalDefaultsKey = "refreshInterval"
+    static let refreshIntervalDefaultsKey = "refreshInterval"
     static let maxBackoffInterval: TimeInterval = 300
+    /// The Settings picker's options. 1 minute was dropped on 2026-10-01:
+    /// the endpoint sustains only about one request per 2 minutes, so it
+    /// added 429s without updating any faster (docs/REQUIREMENTS.md §8).
+    static let allowedRefreshIntervals: [TimeInterval] = [120, 300]
+    static let defaultRefreshInterval: TimeInterval = 120
 
     init(provider: UsageProvider = ClaudeUsageProvider()) {
         self.provider = provider
         let saved = UserDefaults.standard.double(forKey: Self.refreshIntervalDefaultsKey)
-        self.refreshInterval = saved > 0 ? saved : 60
+        let interval = Self.normalizedRefreshInterval(saved)
+        self.refreshInterval = interval
+        // Rewrite a saved value the picker can't show (e.g. the old 60 s), so
+        // the stored setting matches what's running. Not saved at all stays
+        // unsaved, so it follows any future change of the default.
+        if saved > 0, saved != interval {
+            UserDefaults.standard.set(interval, forKey: Self.refreshIntervalDefaultsKey)
+        }
         restartLoop()
         observeWake()
     }
@@ -101,6 +113,12 @@ final class UsageViewModel: ObservableObject {
             lastError = (error as? UsageProviderError) ?? .network(error)
             consecutiveFailures += 1
         }
+    }
+
+    /// Unsaved (0), the retired 60 s, or any other value outside the
+    /// picker's options falls back to the default.
+    nonisolated static func normalizedRefreshInterval(_ saved: TimeInterval) -> TimeInterval {
+        allowedRefreshIntervals.contains(saved) ? saved : defaultRefreshInterval
     }
 
     private func nextDelay() -> TimeInterval {

@@ -469,54 +469,54 @@
         }
       }
     },
-    "interval.1m" : {
+    "interval.2m" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 Minute"
+            "value" : "2 Minuten"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 minute"
+            "value" : "2 minutes"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 minuto"
+            "value" : "2 minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 minute"
+            "value" : "2 minutes"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 minuto"
+            "value" : "2 minuti"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1分"
+            "value" : "2分"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1분"
+            "value" : "2분"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 minuto"
+            "value" : "2 minutos"
           }
         }
       }

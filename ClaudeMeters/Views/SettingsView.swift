@@ -13,12 +13,13 @@ struct SettingsView: View {
                     updateLaunchAtLogin(newValue)
                 }
 
-            // 30 seconds is intentionally not offered: the usage endpoint is
-            // undocumented and has known 429s under frequent polling, and no
-            // safe minimum interval has been confirmed yet (see
+            // Must match UsageViewModel.allowedRefreshIntervals. Nothing
+            // shorter than 2 minutes is offered: at 1 minute the undocumented
+            // usage endpoint answered every third request with 429 and
+            // still updated only about every 2 minutes (see
             // docs/REQUIREMENTS.md, section 8/11).
             Picker(l10n.string("settings.refresh_interval"), selection: $viewModel.refreshInterval) {
-                Text(l10n.string("interval.1m")).tag(60.0)
+                Text(l10n.string("interval.2m")).tag(120.0)
                 Text(l10n.string("interval.5m")).tag(300.0)
             }
 

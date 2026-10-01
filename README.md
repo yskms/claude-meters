@@ -19,7 +19,7 @@ A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** a
 - Two circular meters in the menu bar: Session (5h) and Weekly usage, as a percentage
 - Click for a popover with reset countdowns for each meter
 - Auto-refresh with exponential backoff on failure and re-fetch on wake from sleep
-- Launch at login, configurable refresh interval (1 or 5 minutes)
+- Launch at login, configurable refresh interval (2 or 5 minutes)
 - English and Japanese, following your system language
 - VoiceOver support
 - Light and dark mode
