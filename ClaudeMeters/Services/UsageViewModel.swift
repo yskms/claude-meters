@@ -17,12 +17,16 @@ final class UsageViewModel: ObservableObject {
     @Published var refreshInterval: TimeInterval {
         didSet {
             guard refreshInterval != oldValue else { return }
-            UserDefaults.standard.set(refreshInterval, forKey: Self.refreshIntervalDefaultsKey)
+            defaults.set(refreshInterval, forKey: Self.refreshIntervalDefaultsKey)
             restartLoop()
         }
     }
 
     private let provider: UsageProvider
+    /// Injected so tests use their own suite: the test host shares the real
+    /// app's domain, so writing `.standard` there would clobber the user's
+    /// saved interval.
+    private let defaults: UserDefaults
     private var loopTask: Task<Void, Never>?
     private var consecutiveFailures = 0
     private var wakeObserver: NSObjectProtocol?
@@ -43,9 +47,9 @@ final class UsageViewModel: ObservableObject {
     static let allowedRefreshIntervals: [TimeInterval] = [120, 300]
     static let defaultRefreshInterval: TimeInterval = 120
 
-    init(provider: UsageProvider = ClaudeUsageProvider()) {
+    init(provider: UsageProvider = ClaudeUsageProvider(), defaults: UserDefaults = .standard) {
         self.provider = provider
-        let defaults = UserDefaults.standard
+        self.defaults = defaults
         let isSaved = defaults.object(forKey: Self.refreshIntervalDefaultsKey) != nil
         let saved = defaults.double(forKey: Self.refreshIntervalDefaultsKey)
         let interval = Self.normalizedRefreshInterval(saved)
@@ -54,7 +58,7 @@ final class UsageViewModel: ObservableObject {
         // negatives, ...), so the stored setting matches what's running. Not
         // saved at all stays unsaved, so it follows any future default change.
         if isSaved, saved != interval {
-            UserDefaults.standard.set(interval, forKey: Self.refreshIntervalDefaultsKey)
+            defaults.set(interval, forKey: Self.refreshIntervalDefaultsKey)
         }
         restartLoop()
         observeWake()

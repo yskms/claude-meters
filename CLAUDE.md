@@ -63,6 +63,10 @@ Claude Metersのプロジェクト固有の重要事項。詳細な経緯・調�
 - 「ダウンロード」ボタンはAPIレスポンスのURLではなく固定URL（`UpdateChecker.releasesPageURL`）を開く。通知のみで、自動ダウンロード・インストールはしない
 - 結果の文言幅で設定ウィンドウの幅が変わるため、`SettingsWindowController`が`UpdateChecker.state`の変化でも`resizeToFitContent()`を呼んでいる。言語切替の購読と同様、`$state`は反映前に通知されるので1 runloop待ってから測っている
 
+## テストで`UserDefaults.standard`を触らない
+
+ユニットテストはアプリ本体をテストホストとして動かすため、`UserDefaults.standard`はユーザーが実際に使っているアプリの設定（`com.yskms.ClaudeMeters`）そのものになる。テストで読み書き・削除すると、開発機の実際の設定（更新間隔など）が書き換わる。設定を扱う型は`UserDefaults`を注入できるようにし（`UsageViewModel(provider:defaults:)`参照）、テストでは専用のsuiteを使うこと。
+
 ## App Sandboxはv1では無効（意図的）
 
 Claude CodeのKeychain項目への他アプリからのアクセスと非互換になる可能性が高いため。Mac App Store配布はv1対象外。

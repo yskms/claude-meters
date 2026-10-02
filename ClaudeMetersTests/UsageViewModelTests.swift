@@ -4,22 +4,31 @@ import XCTest
 @MainActor
 final class UsageViewModelTests: XCTestCase {
 
+    /// A throwaway suite, never `.standard`: the test host runs in the real
+    /// app's defaults domain, so touching `.standard` would overwrite the
+    /// user's own refresh interval setting.
+    private static let suiteName = "com.yskms.ClaudeMeters.UsageViewModelTests"
+    private var defaults: UserDefaults!
+
     override func setUp() {
         super.setUp()
-        // The loop's very first fetch fires immediately on init, before any
-        // refreshInterval read matters for these tests — but a stale value
-        // saved by a previous run could still affect it, so start clean.
-        UserDefaults.standard.removeObject(forKey: "refreshInterval")
+        UserDefaults().removePersistentDomain(forName: Self.suiteName)
+        defaults = UserDefaults(suiteName: Self.suiteName)
     }
 
     override func tearDown() {
-        UserDefaults.standard.removeObject(forKey: "refreshInterval")
+        UserDefaults().removePersistentDomain(forName: Self.suiteName)
+        defaults = nil
         super.tearDown()
+    }
+
+    private func makeViewModel(_ provider: UsageProvider) -> UsageViewModel {
+        UsageViewModel(provider: provider, defaults: defaults)
     }
 
     func testSuccessfulFetchUpdatesSnapshotAndClearsError() async {
         let mock = MockUsageProvider(outcomes: [.success(SampleData.snapshot)])
-        let viewModel = UsageViewModel(provider: mock)
+        let viewModel = makeViewModel(mock)
 
         await waitUntil { viewModel.snapshot != nil }
 
@@ -31,7 +40,7 @@ final class UsageViewModelTests: XCTestCase {
 
     func testFailedFetchSetsLastErrorAndKeepsSnapshotNil() async {
         let mock = MockUsageProvider(outcomes: [.failure(.credentialUnavailable)])
-        let viewModel = UsageViewModel(provider: mock)
+        let viewModel = makeViewModel(mock)
 
         await waitUntil { viewModel.lastError != nil }
 
@@ -60,7 +69,7 @@ final class UsageViewModelTests: XCTestCase {
             .failure(.credentialUnavailable),
             .success(secondSnapshot)
         ])
-        let viewModel = UsageViewModel(provider: mock)
+        let viewModel = makeViewModel(mock)
 
         // 成功
         await waitUntil { viewModel.snapshot != nil }
@@ -87,44 +96,44 @@ final class UsageViewModelTests: XCTestCase {
 
     func testRefreshIntervalPersistsToUserDefaults() {
         let mock = MockUsageProvider(outcomes: [.success(SampleData.snapshot)])
-        let viewModel = UsageViewModel(provider: mock)
+        let viewModel = makeViewModel(mock)
 
         viewModel.refreshInterval = 300
 
-        XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 300)
+        XCTAssertEqual(defaults.double(forKey: "refreshInterval"), 300)
     }
 
     func testUnsavedRefreshIntervalDefaultsToTwoMinutesWithoutSaving() {
-        let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+        let viewModel = makeViewModel(MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
 
         XCTAssertEqual(viewModel.refreshInterval, 120)
-        XCTAssertNil(UserDefaults.standard.object(forKey: "refreshInterval"))
+        XCTAssertNil(defaults.object(forKey: "refreshInterval"))
     }
 
     func testSavedOneMinuteIntervalMigratesToTwoMinutes() {
-        UserDefaults.standard.set(60.0, forKey: "refreshInterval")
-        let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+        defaults.set(60.0, forKey: "refreshInterval")
+        let viewModel = makeViewModel(MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
 
         XCTAssertEqual(viewModel.refreshInterval, 120)
-        XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 120)
+        XCTAssertEqual(defaults.double(forKey: "refreshInterval"), 120)
     }
 
     func testSavedInvalidIntervalsAreRewrittenToTwoMinutes() {
         for invalid in [0.0, -1.0, 30.0, 600.0] {
-            UserDefaults.standard.set(invalid, forKey: "refreshInterval")
-            let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+            defaults.set(invalid, forKey: "refreshInterval")
+            let viewModel = makeViewModel(MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
 
             XCTAssertEqual(viewModel.refreshInterval, 120, "saved \(invalid)")
-            XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 120, "saved \(invalid)")
+            XCTAssertEqual(defaults.double(forKey: "refreshInterval"), 120, "saved \(invalid)")
         }
     }
 
     func testSavedFiveMinuteIntervalIsKept() {
-        UserDefaults.standard.set(300.0, forKey: "refreshInterval")
-        let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
+        defaults.set(300.0, forKey: "refreshInterval")
+        let viewModel = makeViewModel(MockUsageProvider(outcomes: [.success(SampleData.snapshot)]))
 
         XCTAssertEqual(viewModel.refreshInterval, 300)
-        XCTAssertEqual(UserDefaults.standard.double(forKey: "refreshInterval"), 300)
+        XCTAssertEqual(defaults.double(forKey: "refreshInterval"), 300)
     }
 
     func testNormalizedRefreshInterval() {
