@@ -80,12 +80,17 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var updateButton: some View {
-        if case .updateAvailable = updateChecker.state {
+        switch updateChecker.state {
+        case .updateAvailable:
             // Opens the Releases page; installing stays a manual DMG download.
             Button(l10n.string("update.download")) {
                 NSWorkspace.shared.open(UpdateChecker.releasesPageURL)
             }
-        } else {
+        case .upToDate:
+            // Nothing left to do. The button returns the next time the
+            // window is shown (see UpdateChecker.resetIfFinished).
+            EmptyView()
+        case .idle, .checking, .failed:
             Button(l10n.string("settings.check_for_updates")) {
                 Task { await updateChecker.check() }
             }
