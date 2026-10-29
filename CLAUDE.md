@@ -88,3 +88,12 @@ Distribution/build-dmg.sh <version>   # 例: Distribution/build-dmg.sh 0.1.2
 - 署名: Developer ID Application: Masashi Yasaka (3L2FPFG722)
 - notarytoolの認証情報はKeychainに`claude-meters-notary`というプロファイル名で保存済み（Apple IDパスワードの再入力は不要）
 - 署名証明書・notary認証情報はどちらもMac本体のキーチェーンに紐づくローカル情報で、iCloud Keychain等では自動同期されない。新しいMacで配布ビルドする場合は、証明書の`.p12`インポートまたはdeveloper.apple.comでの再発行と、`xcrun notarytool store-credentials "claude-meters-notary" --apple-id <Apple ID> --team-id 3L2FPFG722 --password <アプリ用パスワード>`によるnotary認証情報の再登録が別途必要（2026-09-28、Mac移行時に未設定で発覚）
+
+## 紹介サイト（`public/`）
+
+`https://yskms.github.io/claude-meters/`（英語）と`/ja/`の2ページ。`public/`だけをGitHub Actions（`.github/workflows/pages.yml`）で配信する。`docs/`をPagesの元にしないこと（Jekyllが`REQUIREMENTS.md`などの内部文書を公開してしまう）。`sitemap.xml`・`robots.txt`は`yskms.github.io`リポジトリのルートに1つだけあり、ここには置かない。計画と経緯は`yskms-marketing`リポジトリの`docs/site-plan.md`。
+
+- **ページの文面には、アプリの実装に結びついた主張がある。実装を変えたら、両ページ（`index.html`・`ja/index.html`）を見直す。** 「ほかの通信は、手動の更新確認でのGitHubだけ」（通信先を足したら誤りになる）、「8言語」（`Localizable.xcstrings`が正。READMEの「English and Japanese」は古い）、更新間隔（2分/5分）、macOS 13以降、v0.1.1以降は署名・公証済み。
+- **「非公式・未ドキュメントのAPI」の注意書きと、Anthropicとは無関係という免責は、外さない。** 名前にClaudeを含む個人のツールで、Usage APIは公開APIではない。
+- `public/images/`のポップオーバーとメニューバー（`glyph-*`）の画像は、スクリーンショットではなく、アプリ自身のViewを使い捨てのテストから`ImageRenderer`で描画した（サンプル値11%・12%。ページにも「数値はサンプル」と書いてある）。UIを変えたら描き直す。グリフの描画用Viewは`private`なので、一時的に外してから描画し、元に戻す。テストで`LocalizationManager`の言語を書き換えると実機の設定を汚すので、`xcodebuild`の`-testLanguage`で言語を切り替える。
+- 日本語ページの短い行（`.lead`・`.facts`・`figcaption`）は`word-break: keep-all`＋手置きの`<wbr>`で折り返しを決めている（iOS Safariは`auto-phrase`を無視する）。文言を変えたら`<wbr>`も付け直す。
