@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Meters — Claude Code usage in your Mac menu bar</title>
+<meta name="description" content="A tiny macOS menu bar app that shows your Claude Code Session (5-hour) and Weekly usage as two ring meters. Free and open source. macOS 13 or later.">
+<link rel="canonical" href="https://yskms.github.io/claude-meters/">
+<link rel="alternate" hreflang="en" href="https://yskms.github.io/claude-meters/">
+<link rel="alternate" hreflang="ja" href="https://yskms.github.io/claude-meters/ja/">
+<link rel="alternate" hreflang="x-default" href="https://yskms.github.io/claude-meters/">
+<link rel="icon" type="image/png" href="icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Claude Meters">
+<meta property="og:url" content="https://yskms.github.io/claude-meters/">
+<meta property="og:title" content="Claude Meters — Claude Code usage in your Mac menu bar">
+<meta property="og:description" content="A tiny macOS menu bar app that shows your Claude Code Session (5-hour) and Weekly usage as two ring meters. Free and open source. macOS 13 or later.">
+<meta property="og:image" content="https://yskms.github.io/claude-meters/icon.png">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Claude Meters — Claude Code usage in your Mac menu bar">
+<meta name="twitter:description" content="A tiny macOS menu bar app that shows your Claude Code Session (5-hour) and Weekly usage as two ring meters. Free and open source. macOS 13 or later.">
+<meta name="twitter:image" content="https://yskms.github.io/claude-meters/icon.png">
+<!-- og・twitter・JSON-LD の description は、meta description と同じ文にしておく（片方だけ直さない）。ja/index.html も同じ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Claude Meters",
+  "description": "A tiny macOS menu bar app that shows your Claude Code Session (5-hour) and Weekly usage as two ring meters. Free and open source. macOS 13 or later.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS 13 or later",
+  "url": "https://yskms.github.io/claude-meters/",
+  "image": "https://yskms.github.io/claude-meters/icon.png",
+  "screenshot": "https://yskms.github.io/claude-meters/images/popover-en-light.png",
+  "downloadUrl": "https://github.com/yskms/claude-meters/releases/latest",
+  "license": "https://github.com/yskms/claude-meters/blob/main/LICENSE",
+  "inLanguage": ["en", "ja", "ko", "de", "fr", "it", "pt-BR", "es"],
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "yskms" }
+}
+</script>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="lang-switch" aria-label="Language">
+    <a href="ja/" hreflang="ja" lang="ja">日本語</a>
+  </nav>
+
+  <header class="hero">
+    <img class="icon" src="icon.png" width="96" height="96" alt="Claude Meters">
+    <h1>Claude Meters</h1>
+    <p class="lead">A tiny macOS menu bar utility that shows your Claude Code <strong class="nw">Session (5-hour)</strong> and <strong>Weekly</strong> usage as two glanceable ring meters — nothing else.</p>
+    <p class="actions">
+      <a class="button primary" href="https://github.com/yskms/claude-meters/releases/latest">Download for macOS</a>
+      <a class="button" href="https://github.com/yskms/claude-meters">View on GitHub</a>
+    </p>
+    <p class="facts">Free and open source (MIT) · Requires macOS 13 Ventura or later</p>
+  </header>
+
+  <figure class="shots">
+    <div class="menubar">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="images/glyph-white.png">
+        <img src="images/glyph-black.png" width="88" height="40" alt="The two ring meters in the menu bar, showing 11% and 12%">
+      </picture>
+    </div>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="images/popover-en-dark.png">
+      <img class="popover" src="images/popover-en-light.png" width="260" height="265" alt="The popover: Session 11%, resetting in 3 hours; Weekly 12%, resetting in 4 days">
+    </picture>
+    <figcaption>The menu bar, and the popover that opens when you click it. The values are samples.</figcaption>
+  </figure>
+
+  <section>
+    <h2>Features</h2>
+    <ul>
+      <li><strong>Two rings, always in view.</strong> <span class="nw">Session (5-hour)</span> and Weekly usage appear as percentages in the menu bar.</li>
+      <li><strong>Click for reset countdowns.</strong> The popover shows how long until each meter resets.</li>
+      <li><strong>Stays current on its own.</strong> It refreshes every 2 or 5 minutes (your choice), retries with exponential backoff when a fetch fails, and fetches again when your Mac wakes from sleep.</li>
+      <li><strong>Menu bar only.</strong> No Dock icon and no window to keep open. Launch at login is optional.</li>
+      <li><strong>Light and dark mode, VoiceOver.</strong> It follows your appearance setting and supports VoiceOver.</li>
+      <li><strong>Eight languages.</strong> English, Japanese, Korean, German, French, Italian, Brazilian Portuguese and Spanish. It follows your system language, or you can pick one in Settings.</li>
+    </ul>
+    <p class="small">Not included: usage history, graphs, forecasts, notifications, multiple accounts and per-model breakdowns.</p>
+  </section>
+
+  <section>
+    <h2>Requirements and install</h2>
+    <ul>
+      <li>macOS 13 (Ventura) or later.</li>
+      <li><a href="https://claude.com/product/claude-code">Claude Code</a> installed and signed in (a Pro or Max subscription, or Console billing with usage limits).</li>
+    </ul>
+    <ol>
+      <li>Open the <a href="https://github.com/yskms/claude-meters/releases/latest">latest release</a> and download <code>ClaudeMeters-v*-macOS.dmg</code> from <strong>Assets</strong>. You don't need the "Source code" archives.</li>
+      <li>Open the <code>.dmg</code> and drag <code>Claude Meters.app</code> into the <code>Applications</code> folder.</li>
+      <li>Launch it. The two rings appear in your menu bar.</li>
+    </ol>
+    <p class="small">Releases from v0.1.1 onward are signed with a Developer ID certificate and notarized by Apple, so macOS opens them without a Gatekeeper warning. There is no automatic update: <em>Check for Updates</em> in Settings tells you when a newer version is out and opens the releases page.</p>
+  </section>
+
+  <section>
+    <h2>How it gets your usage data</h2>
+    <p>Claude Meters never asks for or stores its own credentials. It reads the OAuth token that Claude Code already keeps in your macOS Keychain (the <code>Claude Code-credentials</code> item) and uses it to ask Anthropic's usage endpoint for your Session and Weekly numbers.</p>
+    <p>It reads the token through <code>/usr/bin/security</code>, the same command Claude Code uses to save it, so a Keychain prompt normally doesn't appear, and doesn't come back after Claude Code refreshes its token. If one does appear (for example, while your keychain is locked), approve it with your login password.</p>
+    <p>The only other network request is the update check, and only when you press <em>Check for Updates</em>: it asks GitHub for the latest release.</p>
+    <div class="callout">
+      <p><strong>An unofficial tool, built on an undocumented endpoint.</strong> That endpoint isn't part of Anthropic's public, documented API, and it can change or stop working without notice. If the response ever stops matching what the app expects, Claude Meters shows a failure (–) rather than guessing.</p>
+    </div>
+  </section>
+
+  <footer>
+    <ul>
+      <li><a href="https://github.com/yskms/claude-meters">Source on GitHub</a></li>
+      <li><a href="https://github.com/yskms/claude-meters/releases">Releases</a></li>
+      <li><a href="https://github.com/yskms/claude-meters/issues">Report an issue</a></li>
+      <li><a href="https://github.com/yskms/claude-meters/blob/main/LICENSE">MIT License</a></li>
+    </ul>
+    <p>Claude and Claude Code are products of Anthropic. Claude Meters is an independent project and is not affiliated with or endorsed by Anthropic.</p>
+    <p>© 2026 yskms</p>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Meters — Claude Codeの使用量をメニューバーに表示するMacアプリ</title>
+<meta name="description" content="Claude Codeのセッション（5時間）と週間の使用率を、macOSのメニューバーに2つの円形メーターで表示する小さなユーティリティ。無料・オープンソース。macOS 13以降。">
+<link rel="canonical" href="https://yskms.github.io/claude-meters/ja/">
+<link rel="alternate" hreflang="en" href="https://yskms.github.io/claude-meters/">
+<link rel="alternate" hreflang="ja" href="https://yskms.github.io/claude-meters/ja/">
+<link rel="alternate" hreflang="x-default" href="https://yskms.github.io/claude-meters/">
+<link rel="icon" type="image/png" href="../icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Claude Meters">
+<meta property="og:url" content="https://yskms.github.io/claude-meters/ja/">
+<meta property="og:title" content="Claude Meters — Claude Codeの使用量をメニューバーに表示するMacアプリ">
+<meta property="og:description" content="Claude Codeのセッション（5時間）と週間の使用率を、macOSのメニューバーに2つの円形メーターで表示する小さなユーティリティ。無料・オープンソース。macOS 13以降。">
+<meta property="og:image" content="https://yskms.github.io/claude-meters/icon.png">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Claude Meters — Claude Codeの使用量をメニューバーに表示するMacアプリ">
+<meta name="twitter:description" content="Claude Codeのセッション（5時間）と週間の使用率を、macOSのメニューバーに2つの円形メーターで表示する小さなユーティリティ。無料・オープンソース。macOS 13以降。">
+<meta name="twitter:image" content="https://yskms.github.io/claude-meters/icon.png">
+<!-- og・twitter・JSON-LD の description は、meta description と同じ文にしておく（片方だけ直さない）。index.html も同じ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Claude Meters",
+  "description": "Claude Codeのセッション（5時間）と週間の使用率を、macOSのメニューバーに2つの円形メーターで表示する小さなユーティリティ。無料・オープンソース。macOS 13以降。",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS 13 or later",
+  "url": "https://yskms.github.io/claude-meters/ja/",
+  "image": "https://yskms.github.io/claude-meters/icon.png",
+  "screenshot": "https://yskms.github.io/claude-meters/images/popover-ja-light.png",
+  "downloadUrl": "https://github.com/yskms/claude-meters/releases/latest",
+  "license": "https://github.com/yskms/claude-meters/blob/main/LICENSE",
+  "inLanguage": ["ja", "en", "ko", "de", "fr", "it", "pt-BR", "es"],
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+  "author": { "@type": "Person", "name": "yskms" }
+}
+</script>
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="lang-switch" aria-label="言語">
+    <a href="../" hreflang="en" lang="en">English</a>
+  </nav>
+
+  <header class="hero">
+    <img class="icon" src="../icon.png" width="96" height="96" alt="Claude Meters">
+    <h1>Claude Meters</h1>
+    <p class="lead phrase">Claude Codeの<wbr><strong class="nw">セッション（5時間）</strong>と<strong>週間</strong>の<wbr>使用率を、<wbr>メニューバーの<wbr>2つの<wbr>円形メーターだけで<wbr>確認できる、<wbr>macOS用の<wbr>小さな<wbr>ユーティリティです。</p>
+    <p class="actions">
+      <a class="button primary" href="https://github.com/yskms/claude-meters/releases/latest">macOS版をダウンロード</a>
+      <a class="button" href="https://github.com/yskms/claude-meters">GitHubで見る</a>
+    </p>
+    <p class="facts phrase">無料・<wbr>オープンソース（MIT） · macOS 13 Ventura以降</p>
+  </header>
+
+  <figure class="shots">
+    <div class="menubar">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="../images/glyph-white.png">
+        <img src="../images/glyph-black.png" width="88" height="40" alt="メニューバーの2つの円形メーター（11%と12%）">
+      </picture>
+    </div>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="../images/popover-ja-dark.png">
+      <img class="popover" src="../images/popover-ja-light.png" width="260" height="265" alt="ポップオーバー：セッション11%（3時間後にリセット）、週間12%（4日後にリセット）">
+    </picture>
+    <figcaption class="phrase">メニューバーの<wbr>表示と、<wbr>クリックすると<wbr>開く<wbr>ポップオーバー。<wbr>数値は<wbr>サンプルです。</figcaption>
+  </figure>
+
+  <section>
+    <h2>特徴</h2>
+    <ul>
+      <li><strong>2つのリングを、常に表示。</strong><span class="nw">セッション（5時間）</span>と週間の使用率を、メニューバーにパーセントで表示します。</li>
+      <li><strong>クリックでリセットまでの時間を確認。</strong><span class="nw">ポップオーバー</span>に、各メーターがリセットされるまでの時間が出ます。</li>
+      <li><strong>自動で最新の状態に。</strong>2分または5分ごとに自動で更新します（設定で選べます）。取得に失敗したときは指数バックオフで再試行し、スリープから復帰したときにも取得し直します。</li>
+      <li><strong>メニューバーだけで完結。</strong>Dockアイコンも、開いたままにするウインドウもありません。ログイン時の起動は任意です。</li>
+      <li><strong>ライト・ダークモードとVoiceOverに対応。</strong>外観の設定に合わせて表示します。</li>
+      <li><strong>8言語に対応。</strong><span class="nw">英語</span>、<span class="nw">日本語</span>、<span class="nw">韓国語</span>、<span class="nw">ドイツ語</span>、<span class="nw">フランス語</span>、<span class="nw">イタリア語</span>、<span class="nw">ポルトガル語（ブラジル）</span>、<span class="nw">スペイン語</span>。システムの言語に従い、設定から切り替えることもできます。</li>
+    </ul>
+    <p class="small">含まれないもの：使用量の履歴、グラフ、予測、通知、複数アカウント、モデル別の内訳。</p>
+  </section>
+
+  <section>
+    <h2>動作環境とインストール</h2>
+    <ul>
+      <li>macOS 13 (Ventura) 以降。</li>
+      <li><a href="https://claude.com/product/claude-code">Claude Code</a>がインストール・サインイン済みであること（使用量の上限があるPro/Maxプラン、またはConsole課金）。</li>
+    </ul>
+    <ol>
+      <li><a href="https://github.com/yskms/claude-meters/releases/latest">最新のリリース</a>を開き、<strong>Assets</strong>から<code>ClaudeMeters-v*-macOS.dmg</code>をダウンロードします。「Source code」はソースコードなので不要です。</li>
+      <li><code>.dmg</code>を開き、<code>Claude Meters.app</code>を<code>Applications</code>フォルダにドラッグします。</li>
+      <li>起動すると、メニューバーに2つのリングが表示されます。</li>
+    </ol>
+    <p class="small">v0.1.1以降のリリースはDeveloper ID証明書で署名され、Appleの公証も済んでいるため、Gatekeeperの警告なしで開けます。自動更新はしません。設定の「更新を確認」で、新しい版が出ているかを確認し、リリースのページを開けます。</p>
+  </section>
+
+  <section>
+    <h2>Usage情報の取得方法</h2>
+    <p>Claude Meters自身は認証情報を要求・保存しません。Claude CodeがすでにmacOSのKeychain（<code>Claude Code-credentials</code>）に保存しているOAuthトークンを読み取り、それを使ってAnthropicのUsage APIにセッションと週間の使用率を問い合わせます。</p>
+    <p>トークンは、Claude Code自身がこの項目の保存に使っている<code>/usr/bin/security</code>コマンド経由で読み取ります。そのため、通常はKeychainの許可ダイアログは表示されず、Claude Codeがトークンを更新したあとも再表示されません。キーチェーンがロックされているときなどにダイアログが出たら、ログインパスワードで許可してください。</p>
+    <p>ほかの通信は、設定の「更新を確認」を押したときに、GitHubへ最新のリリースを問い合わせるものだけです。</p>
+    <div class="callout">
+      <p><strong>非公式のツールで、ドキュメントのないAPIを使っています。</strong>このAPIはAnthropicの公開・ドキュメント化されたAPIではなく、予告なく変更されたり、使えなくなったりすることがあります。応答が想定と合わなくなったときは、推測せずに失敗（–）として表示します。</p>
+    </div>
+  </section>
+
+  <footer>
+    <ul>
+      <li><a href="https://github.com/yskms/claude-meters">GitHubのソース</a></li>
+      <li><a href="https://github.com/yskms/claude-meters/releases">Releases</a></li>
+      <li><a href="https://github.com/yskms/claude-meters/issues">お問い合わせ（Issues）</a></li>
+      <li><a href="https://github.com/yskms/claude-meters/blob/main/LICENSE">MITライセンス</a></li>
+    </ul>
+    <p>ClaudeおよびClaude CodeはAnthropicの製品です。Claude Metersは個人による独立したプロジェクトで、Anthropicとは提携しておらず、承認も受けていません。</p>
+    <p>© 2026 yskms</p>
+  </footer>
+</div>
+</body>
+</html>

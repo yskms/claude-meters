@@ -1,0 +1,177 @@
+/* en・ja の紹介ページ共通。配色はアプリのアイコン（濃紺とリングの青紫）から取った。 */
+:root {
+  color-scheme: light dark;
+  --bg: #f6f6fa;
+  --surface: #ffffff;
+  --text: #181a24;
+  --muted: #5b5f72;
+  --border: #dcdde8;
+  --accent: #4f46e5;
+  --accent-contrast: #ffffff;
+  --bar: #e8e8f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f111a;
+    --surface: #171a27;
+    --text: #e9eaf2;
+    --muted: #a3a7ba;
+    --border: #2a2e40;
+    --accent: #9aa5ff;
+    --accent-contrast: #0f111a;
+    --bar: #1d2030;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.75;
+}
+
+.wrap {
+  width: min(720px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 24px 0 64px;
+}
+
+a { color: var(--accent); }
+a:focus-visible, .button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.lang-switch { text-align: right; font-size: 0.9rem; }
+.lang-switch a { color: var(--muted); }
+
+/* ---- 先頭 ---- */
+.hero { text-align: center; padding: 16px 0 8px; }
+
+.icon {
+  display: block;
+  margin: 0 auto;
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+h1 { margin: 16px 0 8px; font-size: clamp(1.9rem, 6vw, 2.5rem); line-height: 1.2; }
+
+.lead {
+  max-width: 34em;
+  margin: 0 auto;
+  color: var(--muted);
+  text-wrap: balance;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 28px 0 0;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.button:hover { border-color: var(--accent); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.button.primary:hover { filter: brightness(1.08); }
+
+.facts { margin: 16px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+/* ---- メニューバーとポップオーバー ---- */
+.shots { margin: 40px auto 0; max-width: 360px; text-align: center; }
+
+.menubar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  border-radius: 10px;
+  background: var(--bar);
+}
+.menubar img { display: block; width: 88px; height: 40px; }
+
+.popover {
+  display: block;
+  width: 260px;
+  height: auto;
+  margin: 12px auto 0;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--border), 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+.shots figcaption { margin-top: 14px; color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+
+/* ---- 本文 ---- */
+section { margin-top: 48px; }
+
+h2 { margin: 0 0 12px; font-size: 1.3rem; line-height: 1.4; }
+
+p { margin: 0 0 12px; }
+
+ul, ol { margin: 0 0 12px; padding-left: 1.4em; }
+li { margin-bottom: 8px; }
+li strong { font-weight: 650; }
+
+code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  font-size: 0.9em;
+}
+
+.small { color: var(--muted); font-size: 0.92rem; }
+
+.nw { white-space: nowrap; }
+
+/* 日本語の短い行（ja/index.htmlの.lead・.facts・figcaption）は、<wbr>と記号でだけ折り返す。
+   auto-phraseはiOS Safariで効かず、単語の途中で折れる（hubと同じ事情）。文言を変えたら<wbr>も付け直す。
+   本文は通常の折り返しのまま、折れてほしくない語だけ.nwで囲む。 */
+.phrase { word-break: keep-all; overflow-wrap: break-word; }
+
+.callout {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.callout p:last-child { margin-bottom: 0; }
+
+/* ---- フッター ---- */
+footer {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+footer ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; margin: 0 0 16px; padding: 0; list-style: none; }
+footer li { margin: 0; }
+footer a { color: var(--muted); }
+footer a:hover { color: var(--accent); }
+footer p { margin-bottom: 6px; }
+
+@media (max-width: 480px) {
+  .wrap { padding-top: 16px; }
+  .button { flex: 1 1 100%; justify-content: center; }
+}
