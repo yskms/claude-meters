@@ -66,7 +66,8 @@ struct MenuBarMetersView: View {
     }
 }
 
-private struct MetersGlyph: View {
+// internal (not private) only so SiteImageRenderTests can render it for the site.
+struct MetersGlyph: View {
     let sessionPercent: Int?
     let weeklyPercent: Int?
 

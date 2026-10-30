@@ -91,9 +91,9 @@ Distribution/build-dmg.sh <version>   # 例: Distribution/build-dmg.sh 0.1.2
 
 ## 紹介サイト（`public/`）
 
-`https://yskms.github.io/claude-meters/`（英語）と`/ja/`の2ページ。`public/`だけをGitHub Actions（`.github/workflows/pages.yml`）で配信する。`docs/`をPagesの元にしないこと（Jekyllが`REQUIREMENTS.md`などの内部文書を公開してしまう）。`sitemap.xml`・`robots.txt`は`yskms.github.io`リポジトリのルートに1つだけあり、ここには置かない。計画と経緯は`yskms-marketing`リポジトリの`docs/site-plan.md`。
+`https://yskms.github.io/claude-meters/`（英語）と`/ja/`の2ページ。`public/`だけをGitHub Actions（`.github/workflows/pages.yml`）で配信する。`docs/`をPagesの元にしないこと（Jekyllが`REQUIREMENTS.md`などの内部文書を公開してしまう）。`sitemap.xml`・`robots.txt`は`yskms.github.io`リポジトリのルートに1つだけあり、ここには置かない。計画と経緯は、作者のprivateリポジトリ`yskms-marketing`の`docs/site-plan.md`にある（公開していないので、外部の人には開けない）。
 
 - **ページの文面には、アプリの実装に結びついた主張がある。実装を変えたら、両ページ（`index.html`・`ja/index.html`）を見直す。** 「ほかの通信は、手動の更新確認でのGitHubだけ」（通信先を足したら誤りになる）、「8言語」（`Localizable.xcstrings`が正。READMEの「English and Japanese」は古い）、更新間隔（2分/5分）、macOS 13以降、v0.1.1以降は署名・公証済み。
 - **「非公式・未ドキュメントのAPI」の注意書きと、Anthropicとは無関係という免責は、外さない。** 名前にClaudeを含む個人のツールで、Usage APIは公開APIではない。
-- `public/images/`のポップオーバーとメニューバー（`glyph-*`）の画像は、スクリーンショットではなく、アプリ自身のViewを使い捨てのテストから`ImageRenderer`で描画した（サンプル値11%・12%。ページにも「数値はサンプル」と書いてある）。UIを変えたら描き直す。グリフの描画用Viewは`private`なので、一時的に外してから描画し、元に戻す。テストで`LocalizationManager`の言語を書き換えると実機の設定を汚すので、`xcodebuild`の`-testLanguage`で言語を切り替える。
+- `public/images/`のポップオーバーとメニューバー（`glyph-*`）の画像は、スクリーンショットではなく、アプリ自身のViewを`ImageRenderer`で描画したもの（サンプル値11%・12%。ページにも「数値はサンプル」と書いてある）。UIを変えたら`Tools/render-site-images.sh`で描き直す（`ClaudeMetersTests/SiteImageRenderTests`を呼ぶ。`SITE_IMAGES_DIR`が無ければskipされるので、通常のテストには影響しない）。`MetersGlyph`は、このテストのためだけに`private`ではなくinternalにしてある。テストで`LocalizationManager`の言語を書き換えると実機の設定を汚すので、言語は`xcodebuild`の`-testLanguage`で切り替える（スクリプトがそうしている）。
 - 日本語ページの短い行（`.lead`・`.facts`・`figcaption`）は`word-break: keep-all`＋手置きの`<wbr>`で折り返しを決めている（iOS Safariは`auto-phrase`を無視する）。文言を変えたら`<wbr>`も付け直す。
