@@ -8,7 +8,7 @@
 
 # Claude Meters
 
-A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** and **Weekly** usage as two glanceable ring meters — nothing else.
+A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** and **Weekly** usage as two glanceable ring meters - nothing else.
 
 <p align="center">
   <img src="docs/images/menubar-demo.png" alt="Claude Meters menu bar demo showing Session 11% and Weekly 12%" width="240">
@@ -25,7 +25,7 @@ A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** a
 - Eight languages (English, Japanese, Korean, German, French, Italian, Brazilian Portuguese, Spanish), following your system language or chosen in Settings
 - VoiceOver support
 - Light and dark mode
-- Menu bar only — no Dock icon, no window
+- Menu bar only - no Dock icon, no window
 
 ## Requirements
 
@@ -34,7 +34,7 @@ A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** a
 
 ## Installation
 
-Download `ClaudeMeters-v*-macOS.dmg` (e.g. `ClaudeMeters-v0.1.2-macOS.dmg`) from the **Assets** section of the [Releases](../../releases) page. You don't need "Source code (zip)" or "Source code (tar.gz)" — those are just the source code.
+Download `ClaudeMeters-v*-macOS.dmg` (e.g. `ClaudeMeters-v0.1.2-macOS.dmg`) from the **Assets** section of the [Releases](../../releases) page. You don't need "Source code (zip)" or "Source code (tar.gz)" - those are just the source code.
 
 Open the downloaded `.dmg` file, then drag `Claude Meters.app` into the `Applications` folder in the window that appears.
 
@@ -42,13 +42,13 @@ Releases from v0.1.1 onward are signed with a Developer ID certificate and notar
 
 ## How it gets your usage data
 
-Claude Meters never asks for or stores its own credentials. Instead it reads the OAuth token that Claude Code already stores in the macOS Keychain (`Claude Code-credentials`) and calls Anthropic's usage endpoint with it — the same one Claude Code itself uses.
+Claude Meters never asks for or stores its own credentials. Instead it reads the OAuth token that Claude Code already stores in the macOS Keychain (`Claude Code-credentials`) and calls Anthropic's usage endpoint with it - the same one Claude Code itself uses.
 
-Since v0.1.7 it reads the token through `/usr/bin/security` — the same command Claude Code uses to save that entry — so no Keychain access prompt normally appears, and none reappears after Claude Code refreshes its token. If a prompt does show up (for example, while your keychain is locked), approve it with your login password.
+Since v0.1.7 it reads the token through `/usr/bin/security` - the same command Claude Code uses to save that entry - so no Keychain access prompt normally appears, and none reappears after Claude Code refreshes its token. If a prompt does show up (for example, while your keychain is locked), approve it with your login password.
 
 Up to v0.1.6, every token refresh by Claude Code reset the "always allow" you granted, so the prompt came back a few times a day. If that's what you're seeing, update to v0.1.7 or later.
 
-This endpoint is **not part of Anthropic's public/documented API** and could change without notice — see [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for the full investigation, the reasoning behind this approach, and its known risks (rate limits, format changes, Keychain access behavior).
+This endpoint is **not part of Anthropic's public/documented API** and could change without notice - see [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for the full investigation, the reasoning behind this approach, and its known risks (rate limits, format changes, Keychain access behavior).
 
 ## Development
 
