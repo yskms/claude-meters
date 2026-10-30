@@ -4,6 +4,8 @@
 
 <p align="center"><a href="README.md">English</a> | <b>日本語</b></p>
 
+<p align="center"><a href="https://yskms.github.io/claude-meters/ja/">Webサイト</a></p>
+
 # Claude Meters
 
 Claude Codeの **セッション（5時間）** と **週間** の使用率を、メニューバーの2つの円形メーターだけで確認できる、macOS用の小さなユーティリティです。
