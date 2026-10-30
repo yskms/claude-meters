@@ -20,7 +20,7 @@ A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** a
 - Click for a popover with reset countdowns for each meter
 - Auto-refresh with exponential backoff on failure and re-fetch on wake from sleep
 - Launch at login, configurable refresh interval (2 or 5 minutes), manual update check
-- English and Japanese, following your system language
+- Eight languages (English, Japanese, Korean, German, French, Italian, Brazilian Portuguese, Spanish), following your system language or chosen in Settings
 - VoiceOver support
 - Light and dark mode
 - Menu bar only — no Dock icon, no window
@@ -28,7 +28,7 @@ A tiny macOS menu bar utility that shows your Claude Code **Session (5-hour)** a
 ## Requirements
 
 - macOS 13 (Ventura) or later
-- [Claude Code](https://claude.com/product/claude-code) installed and signed in (Pro/Max subscription or Console billing with usage limits)
+- [Claude Code](https://claude.com/product/claude-code) installed and signed in with a Claude Pro or Max plan
 
 ## Installation
 
