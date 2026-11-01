@@ -85,6 +85,8 @@ Distribution/build-dmg.sh <version>   # 例: Distribution/build-dmg.sh 0.1.2
 
 `build-dmg.sh`は内部で`create-dmg --notarize claude-meters-notary`を使っており、DMG作成・Apple公証（notarization）・stapleまでを1コマンドで行う（`notarytool submit`・`stapler staple`を個別に叩く必要はない）。完了後、`dist/export`・`dist/ClaudeMeters.xcarchive`内の`.app`をLaunch Servicesから登録解除してディレクトリごと削除するところまでスクリプトが行う。これらの`.app`は登録解除しないと`/Applications`の本体と別アプリとしてSpotlight/Launchpadに重複表示され続けるため（過去に複数回発生）。
 
+- DMG自体は署名しない（`codesign -dv`が「not signed at all」、`spctl -t open`が「no usable signature」でrejectedになるが、v0.1.8以前も同じで異常ではない）。配布物の検証は、DMGへの`xcrun stapler validate`と、マウントした.appへの`spctl -a -t exec -vv`（`source=Notarized Developer ID`なら正常）で行う
+- リリースの流れ: ブランチをmainへ`--ff-only`でマージ → `project.yml`の`MARKETING_VERSION`を更新して`xcodegen generate`、コミット → 上のarchive〜`build-dmg.sh` → mainをpush、`v<version>`タグをpush、`gh release create v<version> <dmg> --title v<version> --notes-file <notes> --verify-tag`。リリースノートは日本語で、変更点を箇条書きにする（過去のReleasesに倣う）。公開後はDMGを削除する
 - 署名: Developer ID Application: Masashi Yasaka (3L2FPFG722)
 - notarytoolの認証情報はKeychainに`claude-meters-notary`というプロファイル名で保存済み（Apple IDパスワードの再入力は不要）
 - 署名証明書・notary認証情報はどちらもMac本体のキーチェーンに紐づくローカル情報で、iCloud Keychain等では自動同期されない。新しいMacで配布ビルドする場合は、証明書の`.p12`インポートまたはdeveloper.apple.comでの再発行と、`xcrun notarytool store-credentials "claude-meters-notary" --apple-id <Apple ID> --team-id 3L2FPFG722 --password <アプリ用パスワード>`によるnotary認証情報の再登録が別途必要（2026-09-28、Mac移行時に未設定で発覚）
