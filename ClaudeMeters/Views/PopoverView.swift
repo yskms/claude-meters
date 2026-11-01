@@ -11,7 +11,10 @@ struct PopoverView: View {
             Text("Claude Meters")
                 .font(.headline)
 
-            HStack(spacing: 32) {
+            // Top-aligned: a meter without a reset time (e.g. no running
+            // session window) has a shorter column, and the default center
+            // alignment would shift its ring away from the other one.
+            HStack(alignment: .top, spacing: 32) {
                 meterColumn(
                     title: l10n.string("meter.session"),
                     usage: state.session
@@ -87,11 +90,18 @@ struct PopoverView: View {
                 .foregroundStyle(.secondary)
             UsageRingView(percent: usage?.percentUsed, diameter: 44)
             if let resetsAt = usage?.resetsAt {
-                Text(resetLabel(for: resetsAt))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                VStack(spacing: 2) {
+                    Text(resetLabel(for: resetsAt))
+                    Text(resetTimeLabel(for: resetsAt))
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func resetTimeLabel(for date: Date) -> String {
+        ResetTimeFormat.string(for: date, now: Date(), locale: l10n.locale ?? .current)
     }
 
     private func resetLabel(for date: Date) -> String {

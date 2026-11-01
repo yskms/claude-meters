@@ -27,6 +27,8 @@
 		A1F4F24535BF4457490BFC1C /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08711A9459C55D26F3AE04AA /* PopoverView.swift */; };
 		B008BAB7B46088F9C38F55E0 /* ClaudeUsageProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C9EFB58ECA23B6BE5C48C54 /* ClaudeUsageProviderTests.swift */; };
 		B0EFD8EA9CDF53A12A2056E6 /* UsageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A687E197C0F1609DAE44FE /* UsageViewModel.swift */; };
+		B802BEFA45387F0C2E3A767C /* ResetTimeFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6022B701290B9626ECEECC86 /* ResetTimeFormat.swift */; };
+		CA78F3282AE436E7F25367E8 /* ResetTimeFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D12A519CABD958C6FF3D3249 /* ResetTimeFormatTests.swift */; };
 		DB0E5AEC4889511347ABC1F2 /* UsageDisplayStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC02ED455009E4B356A4DE0F /* UsageDisplayStateTests.swift */; };
 		E687781E506E2FB2245F661C /* LocalizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B97B63613834F045E6CF187 /* LocalizationManager.swift */; };
 		F7EAB1636F0F9190C53EA338 /* SiteImageRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0CC09D90C92312FE01E23E /* SiteImageRenderTests.swift */; };
@@ -53,6 +55,7 @@
 		56538FAE95D3C14B65525E94 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		56F579E5AB9D4008CE69E7F4 /* ClaudeMeters.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeMeters.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B97B63613834F045E6CF187 /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
+		6022B701290B9626ECEECC86 /* ResetTimeFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetTimeFormat.swift; sourceTree = "<group>"; };
 		64571509300EB174FFD401A5 /* ClaudeUsageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageProvider.swift; sourceTree = "<group>"; };
 		6E2BE45E77E22B039AFAE4D1 /* AppVersionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionTests.swift; sourceTree = "<group>"; };
 		7C0CC09D90C92312FE01E23E /* SiteImageRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteImageRenderTests.swift; sourceTree = "<group>"; };
@@ -64,6 +67,7 @@
 		AF551B0E9DF7D1E71C672B60 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		B30EEEDA78A0F6FDEE2A9BC8 /* UsageViewModelBackoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageViewModelBackoffTests.swift; sourceTree = "<group>"; };
 		CC02ED455009E4B356A4DE0F /* UsageDisplayStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageDisplayStateTests.swift; sourceTree = "<group>"; };
+		D12A519CABD958C6FF3D3249 /* ResetTimeFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetTimeFormatTests.swift; sourceTree = "<group>"; };
 		D2E412F40766BC8ED513B83A /* ClaudeMetersTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeMetersTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F50BCEC86B91C514C25FA968 /* UsageRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRingView.swift; sourceTree = "<group>"; };
 		F6945EAD88DB90F5FBA23C1E /* UpdateCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateCheckerTests.swift; sourceTree = "<group>"; };
@@ -77,6 +81,7 @@
 				6E2BE45E77E22B039AFAE4D1 /* AppVersionTests.swift */,
 				0C9EFB58ECA23B6BE5C48C54 /* ClaudeUsageProviderTests.swift */,
 				11BFF52F0CAC808C86068ED2 /* MockUsageProvider.swift */,
+				D12A519CABD958C6FF3D3249 /* ResetTimeFormatTests.swift */,
 				7C0CC09D90C92312FE01E23E /* SiteImageRenderTests.swift */,
 				F6945EAD88DB90F5FBA23C1E /* UpdateCheckerTests.swift */,
 				CC02ED455009E4B356A4DE0F /* UsageDisplayStateTests.swift */,
@@ -152,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				3B1BD1B885C90B290EB92CE6 /* AppVersion.swift */,
+				6022B701290B9626ECEECC86 /* ResetTimeFormat.swift */,
 				FB5BE2BF595FDC343F9074BA /* UsageData.swift */,
 			);
 			path = Models;
@@ -274,6 +280,7 @@
 				E687781E506E2FB2245F661C /* LocalizationManager.swift in Sources */,
 				3D1665FF38A702E339A46C0A /* MenuBarMetersView.swift in Sources */,
 				A1F4F24535BF4457490BFC1C /* PopoverView.swift in Sources */,
+				B802BEFA45387F0C2E3A767C /* ResetTimeFormat.swift in Sources */,
 				4A3BCB0D0824EB5BDB738EFA /* SettingsView.swift in Sources */,
 				703452E8230BEF95AA4728EE /* SettingsWindowController.swift in Sources */,
 				60DAED47643BD9E6AD953FD1 /* UpdateChecker.swift in Sources */,
@@ -291,6 +298,7 @@
 				97CEBB5283C2762FB9A12EA4 /* AppVersionTests.swift in Sources */,
 				B008BAB7B46088F9C38F55E0 /* ClaudeUsageProviderTests.swift in Sources */,
 				683F2B54E04B503FA92C3E1B /* MockUsageProvider.swift in Sources */,
+				CA78F3282AE436E7F25367E8 /* ResetTimeFormatTests.swift in Sources */,
 				F7EAB1636F0F9190C53EA338 /* SiteImageRenderTests.swift in Sources */,
 				1959FE38247184611EB6C92F /* UpdateCheckerTests.swift in Sources */,
 				DB0E5AEC4889511347ABC1F2 /* UsageDisplayStateTests.swift in Sources */,
