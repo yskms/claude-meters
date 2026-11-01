@@ -18,3 +18,6 @@ Package.resolved
 
 # Release packaging output
 dist/
+
+# Unpublished drafts (Zenn articles, notes). The repo is public.
+docs/_local/
