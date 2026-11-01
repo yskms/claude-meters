@@ -1,9 +1,13 @@
 #!/bin/bash
-# archive → -exportArchive 済みの .app からDMGを作成し、公証・stapleまで行う。
+# archive → -exportArchive 済みの .app からDMGを作成し、署名・公証・stapleまで行う。
 # 使い方: Distribution/build-dmg.sh <version>  (例: Distribution/build-dmg.sh 0.1.2)
 set -euo pipefail
 
 APP_NAME="Claude Meters"
+# DMG自体の署名に使う。Appleは「一番外側のコンテナ(DMG)に署名して公証する」ことを
+# 推奨している。未署名のままだと、公証・stapleは通っても、DMG単体のGatekeeper評価
+# (spctl -a -t open --context context:primary-signature)がrejectedになる。
+SIGN_IDENTITY="Developer ID Application: Masashi Yasaka (3L2FPFG722)"
 VERSION="${1:?使い方: Distribution/build-dmg.sh <version>}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -40,12 +44,13 @@ create-dmg \
   --icon "$APP_NAME.app" 140 160 \
   --app-drop-link 400 160 \
   --hide-extension "$APP_NAME.app" \
+  --codesign "$SIGN_IDENTITY" \
   --notarize "claude-meters-notary" \
   --overwrite \
   "$DMG_PATH" \
   "$EXPORT_APP"
 
-echo "DMG作成・公証・staple完了: $DMG_PATH"
+echo "DMG作成・署名・公証・staple完了: $DMG_PATH"
 
 # archive/exportの.appはLaunch Servicesに自動登録され、/Applicationsの本体と
 # 別アプリとしてSpotlight/Launchpadに重複表示され続ける。DMGができた時点で

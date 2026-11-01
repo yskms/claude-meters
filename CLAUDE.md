@@ -83,9 +83,10 @@ xcodebuild -exportArchive -archivePath dist/ClaudeMeters.xcarchive -exportPath d
 Distribution/build-dmg.sh <version>   # 例: Distribution/build-dmg.sh 0.1.2
 ```
 
-`build-dmg.sh`は内部で`create-dmg --notarize claude-meters-notary`を使っており、DMG作成・Apple公証（notarization）・stapleまでを1コマンドで行う（`notarytool submit`・`stapler staple`を個別に叩く必要はない）。完了後、`dist/export`・`dist/ClaudeMeters.xcarchive`内の`.app`をLaunch Servicesから登録解除してディレクトリごと削除するところまでスクリプトが行う。これらの`.app`は登録解除しないと`/Applications`の本体と別アプリとしてSpotlight/Launchpadに重複表示され続けるため（過去に複数回発生）。
+`build-dmg.sh`は内部で`create-dmg --codesign <署名ID> --notarize claude-meters-notary`を使っており、DMG作成・DMG署名・Apple公証（notarization）・stapleまでを1コマンドで行う（`notarytool submit`・`stapler staple`を個別に叩く必要はない）。完了後、`dist/export`・`dist/ClaudeMeters.xcarchive`内の`.app`をLaunch Servicesから登録解除してディレクトリごと削除するところまでスクリプトが行う。これらの`.app`は登録解除しないと`/Applications`の本体と別アプリとしてSpotlight/Launchpadに重複表示され続けるため（過去に複数回発生）。
 
-- DMG自体は署名しない（`codesign -dv`が「not signed at all」、`spctl -t open`が「no usable signature」でrejectedになるが、v0.1.8以前も同じで異常ではない）。配布物の検証は、DMGへの`xcrun stapler validate`と、マウントした.appへの`spctl -a -t exec -vv`（`source=Notarized Developer ID`なら正常）で行う
+- DMG自体にも署名してから公証する。Appleが「一番外側のコンテナに署名して公証する」ことを推奨しているため。`--codesign`を外さないこと。v0.1.9までは未署名で配布しており、その場合は公証・stapleが通っても、DMG単体のGatekeeper評価（下記の`--context`付き`spctl`）が`rejected`（`no usable signature`）になる（公開中のv0.1.9で2026-11-01に確認）
+- 配布物の検証は、DMGへの`codesign --verify`と`xcrun stapler validate`、`spctl -a -t open --context context:primary-signature -vv <dmg>`（`accepted`・`source=Notarized Developer ID`なら正常）、マウントした.appへの`spctl -a -t exec -vv`で行う。`--context`なしの`spctl -a -t open`は署名済みでも`Insufficient Context`でrejectedになるが、評価方法が違うだけで異常ではない
 - リリースの流れ: ブランチをmainへ`--ff-only`でマージ → `project.yml`の`MARKETING_VERSION`を更新して`xcodegen generate`、コミット → 上のarchive〜`build-dmg.sh` → mainをpush、`v<version>`タグをpush、`gh release create v<version> <dmg> --title v<version> --notes-file <notes> --verify-tag`。リリースノートは日本語で、変更点を箇条書きにする（過去のReleasesに倣う）。公開後はDMGを削除する
 - 署名: Developer ID Application: Masashi Yasaka (3L2FPFG722)
 - notarytoolの認証情報はKeychainに`claude-meters-notary`というプロファイル名で保存済み（Apple IDパスワードの再入力は不要）
