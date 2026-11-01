@@ -24,13 +24,13 @@ final class ResetTimeFormatTests: XCTestCase {
     }
 
     func testOtherDayAddsWeekday() {
-        XCTAssertEqual(format(date(4, 22), now: date(2, 10), "ja_JP"), "水曜日 22:00")
+        XCTAssertEqual(format(date(4, 22), now: date(2, 10), "ja_JP"), "水 22:00")
         XCTAssertEqual(format(date(4, 22), now: date(2, 10), "en_GB"), "Wed 22:00")
     }
 
     /// A session that crosses midnight is the day after, not "later today".
     func testResetPastMidnightAddsWeekday() {
-        XCTAssertEqual(format(date(5, 2, 30), now: date(4, 23), "ja_JP"), "木曜日 2:30")
+        XCTAssertEqual(format(date(5, 2, 30), now: date(4, 23), "ja_JP"), "木 2:30")
     }
 
     /// The weekly reset can land on today's weekday a week from now; it is a

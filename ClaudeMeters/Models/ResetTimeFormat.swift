@@ -13,11 +13,9 @@ enum ResetTimeFormat {
         // `j` follows the locale's 12/24-hour convention instead of forcing one.
         var template = "jmm"
         if !calendar.isDate(date, inSameDayAs: now) {
-            // Japanese reads naturally with the full weekday ("水曜日"); the
-            // abbreviation ("水") is too terse. Other languages' full names are
-            // long enough to crowd the two-column layout, so they stay abbreviated.
-            let weekday = locale.language.languageCode?.identifier == "ja" ? "EEEE" : "EEE"
-            template = "\(weekday) \(template)"
+            // Abbreviated: some languages' full weekday names are long enough
+            // to crowd the two-column layout.
+            template = "EEE \(template)"
         }
         formatter.setLocalizedDateFormatFromTemplate(template)
         return formatter.string(from: date)
