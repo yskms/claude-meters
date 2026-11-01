@@ -8,7 +8,9 @@ import SwiftUI
 /// never touch the disk. Run it through Tools/render-site-images.sh, which
 /// also switches the app language with -testLanguage (never write a language
 /// into LocalizationManager here: the test host shares the real app's
-/// defaults domain).
+/// defaults domain). -testLanguage only takes effect while the app's language
+/// setting is "Follow system": a saved language wins over it, so the test
+/// fails up front otherwise instead of rendering both runs in that language.
 @MainActor
 final class SiteImageRenderTests: XCTestCase {
 
@@ -22,6 +24,13 @@ final class SiteImageRenderTests: XCTestCase {
         let lang = env["SITE_IMAGES_LANG"] ?? "en"
         let out = URL(fileURLWithPath: dir)
 
+        // Checked before anything is written, so a failure leaves public/images/ untouched.
+        let savedLanguage = LocalizationManager.shared.language
+        guard savedLanguage == .system else {
+            XCTFail("The app's language is set to '\(savedLanguage.rawValue)' in Settings, which overrides -testLanguage. Set it back to \"Follow system\" and run again.")
+            return
+        }
+
         // Sample values, matching the "values are samples" note on the pages.
         UserDefaults().removePersistentDomain(forName: Self.suiteName)
         defer { UserDefaults().removePersistentDomain(forName: Self.suiteName) }
@@ -33,7 +42,7 @@ final class SiteImageRenderTests: XCTestCase {
             fetchedAt: fetched)
         let viewModel = UsageViewModel(provider: MockUsageProvider(outcomes: [.success(snapshot)]), defaults: defaults)
         for _ in 0..<100 where viewModel.snapshot == nil { try await Task.sleep(nanoseconds: 50_000_000) }
-        XCTAssertNotNil(viewModel.snapshot)
+        _ = try XCTUnwrap(viewModel.snapshot, "The mock provider's snapshot was not loaded.")
 
         for (name, scheme, background) in [
             ("light", ColorScheme.light, Color(red: 0.94, green: 0.94, blue: 0.94)),
